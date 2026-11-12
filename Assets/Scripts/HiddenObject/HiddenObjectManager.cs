@@ -186,7 +186,12 @@ namespace CARE.Gameplay
                 GameObject labelObj = new GameObject("Item_" + item.itemName);
                 labelObj.transform.SetParent(itemListContainer, false);
                 Text labelText = labelObj.AddComponent<Text>();
-                labelText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+                Font labelFont = null;
+                try { labelFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); } catch {}
+                if (labelFont == null) { try { labelFont = Resources.GetBuiltinResource<Font>("Arial.ttf"); } catch {} }
+                if (labelFont == null) labelFont = Font.CreateDynamicFontFromOSFont("Arial", 20);
+
+                labelText.font = labelFont;
                 labelText.fontSize = 20;
 
                 bool isFound = foundItemNames.Contains(item.itemName);

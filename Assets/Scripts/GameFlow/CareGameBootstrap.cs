@@ -60,8 +60,8 @@ namespace CARE.Core
             }
             Instance = this;
 
-            // Load built-in font
-            gameFont = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            // Load built-in font safely
+            gameFont = GetDefaultFont();
 
             // Ensure Audio Manager
             EnsureAudioManager();
@@ -74,6 +74,32 @@ namespace CARE.Core
 
             // Setup Canvas & UI Hierarchy
             SetupCanvasAndUI();
+        }
+
+        private Font GetDefaultFont()
+        {
+            Font font = null;
+            try
+            {
+                font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            }
+            catch {}
+
+            if (font == null)
+            {
+                try
+                {
+                    font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+                }
+                catch {}
+            }
+
+            if (font == null)
+            {
+                font = Font.CreateDynamicFontFromOSFont("Arial", 16);
+            }
+
+            return font;
         }
 
         private void Start()
@@ -255,6 +281,8 @@ namespace CARE.Core
                 btn.onClick.RemoveAllListeners();
                 btn.onClick.AddListener(() =>
                 {
+                    Debug.Log("[C.A.R.E.] Tombol Mulai Petualangan diklik!");
+                    if (CareAudioManager.Instance != null) CareAudioManager.Instance.PlayTransitionSFX();
                     if (GameFlowManager.Instance != null) GameFlowManager.Instance.StartOpeningStory();
                 });
             }
@@ -267,6 +295,8 @@ namespace CARE.Core
                 btn.onClick.RemoveAllListeners();
                 btn.onClick.AddListener(() =>
                 {
+                    Debug.Log("[C.A.R.E.] Tombol Lobby Restorasi diklik!");
+                    if (CareAudioManager.Instance != null) CareAudioManager.Instance.PlayTransitionSFX();
                     if (GameFlowManager.Instance != null) GameFlowManager.Instance.ShowLobbyRestorasi();
                 });
             }
@@ -274,7 +304,7 @@ namespace CARE.Core
 
         private GameObject BuildTitlePanel(Transform parent)
         {
-            GameObject panel = CreateUIBox("TitlePanel", parent, new Color(0.08f, 0.14f, 0.1f, 1f));
+            GameObject panel = CreateFullScreenPanel("TitlePanel", parent, new Color(0.08f, 0.14f, 0.1f, 1f));
             CreateUIText("TitleText", panel.transform, "C.A.R.E.", 80, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 150), new Vector2(900, 120));
             CreateUIText("SubtitleText", panel.transform, "Cegah. Api. Rawat. Ekosistem.", 28, Color.white, FontStyle.Normal, new Vector2(0, 60), new Vector2(900, 60));
 
@@ -293,35 +323,38 @@ namespace CARE.Core
 
         private GameObject BuildDialoguePanel(Transform parent)
         {
-            GameObject panel = CreateUIBox("DialoguePanel", parent, new Color(0.05f, 0.08f, 0.06f, 0.92f));
+            GameObject panel = CreateFullScreenPanel("DialoguePanel", parent, new Color(0.05f, 0.08f, 0.06f, 0.96f));
 
-            // Background art placeholder / scenery
+            // Background scenery art if available
             Image bgImg = panel.GetComponent<Image>();
             Sprite forestBg = Resources.Load<Sprite>("Environtment/image 2614");
-            if (forestBg != null) { bgImg.sprite = forestBg; bgImg.color = new Color(0.6f, 0.6f, 0.6f, 1f); }
+            if (forestBg != null)
+            {
+                bgImg.sprite = forestBg;
+                bgImg.color = new Color(0.55f, 0.55f, 0.55f, 1f);
+            }
 
-            // Large Portrait (Left)
+            // Large Portrait (Left/Center)
             GameObject portraitObj = new GameObject("PortraitImage");
             portraitObj.transform.SetParent(panel.transform, false);
             RectTransform portraitRT = portraitObj.AddComponent<RectTransform>();
-            portraitRT.anchorMin = new Vector2(0f, 0f);
-            portraitRT.anchorMax = new Vector2(0f, 1f);
-            portraitRT.pivot = new Vector2(0f, 0.5f);
-            portraitRT.anchoredPosition = new Vector2(40, -40);
-            portraitRT.sizeDelta = new Vector2(460, 650);
+            portraitRT.anchorMin = new Vector2(0.06f, 0.32f);
+            portraitRT.anchorMax = new Vector2(0.36f, 0.92f);
+            portraitRT.offsetMin = Vector2.zero;
+            portraitRT.offsetMax = Vector2.zero;
             Image portraitImg = portraitObj.AddComponent<Image>();
             portraitImg.preserveAspect = true;
 
-            // Dialogue Box (Bottom)
-            GameObject boxObj = CreateUIBox("DialogueBox", panel.transform, new Color(0.08f, 0.12f, 0.1f, 0.94f));
+            // Dialogue Box (Bottom Full-Width)
+            GameObject boxObj = CreateUIBox("DialogueBox", panel.transform, new Color(0.08f, 0.12f, 0.1f, 0.95f));
             RectTransform boxRT = boxObj.GetComponent<RectTransform>();
-            boxRT.anchorMin = new Vector2(0.25f, 0.04f);
-            boxRT.anchorMax = new Vector2(0.96f, 0.38f);
+            boxRT.anchorMin = new Vector2(0.04f, 0.04f);
+            boxRT.anchorMax = new Vector2(0.96f, 0.32f);
             boxRT.offsetMin = Vector2.zero;
             boxRT.offsetMax = Vector2.zero;
 
             // Speaker Nameplate
-            Text speakerText = CreateUIText("SpeakerName", boxObj.transform, "NARATOR", 26, new Color(0.98f, 0.82f, 0.28f), FontStyle.Bold, new Vector2(30, -30), new Vector2(600, 45));
+            Text speakerText = CreateUIText("SpeakerName", boxObj.transform, "NARATOR", 28, new Color(0.98f, 0.82f, 0.28f), FontStyle.Bold, new Vector2(30, -30), new Vector2(600, 45));
             RectTransform spkRT = speakerText.GetComponent<RectTransform>();
             spkRT.anchorMin = new Vector2(0f, 1f);
             spkRT.anchorMax = new Vector2(0f, 1f);
@@ -329,17 +362,17 @@ namespace CARE.Core
             speakerText.alignment = TextAnchor.MiddleLeft;
 
             // Dialogue Body Text
-            Text bodyText = CreateUIText("DialogueBody", boxObj.transform, "Menyiapkan narasi...", 22, Color.white, FontStyle.Normal, new Vector2(30, -85), new Vector2(1000, 160));
+            Text bodyText = CreateUIText("DialogueBody", boxObj.transform, "Menyiapkan narasi...", 24, Color.white, FontStyle.Normal, new Vector2(30, -85), new Vector2(1000, 160));
             RectTransform bodyRT = bodyText.GetComponent<RectTransform>();
             bodyRT.anchorMin = new Vector2(0f, 1f);
             bodyRT.anchorMax = new Vector2(1f, 0f);
             bodyRT.pivot = new Vector2(0f, 1f);
-            bodyRT.offsetMin = new Vector2(30, 20);
-            bodyRT.offsetMax = new Vector2(-30, -80);
+            bodyRT.offsetMin = new Vector2(35, 25);
+            bodyRT.offsetMax = new Vector2(-35, -80);
             bodyText.alignment = TextAnchor.UpperLeft;
 
             // Continue Indicator
-            Text continueIndicator = CreateUIText("ContinueIndicator", boxObj.transform, "Tekan [SPASI] atau Klik untuk lanjut ▶", 18, new Color(0.7f, 0.9f, 0.7f), FontStyle.Italic, new Vector2(-25, 25), new Vector2(400, 30));
+            Text continueIndicator = CreateUIText("ContinueIndicator", boxObj.transform, "Tekan [SPASI] atau Klik untuk lanjut ▶", 20, new Color(0.7f, 0.95f, 0.7f), FontStyle.Italic, new Vector2(-30, 25), new Vector2(450, 35));
             RectTransform ciRT = continueIndicator.GetComponent<RectTransform>();
             ciRT.anchorMin = new Vector2(1f, 0f);
             ciRT.anchorMax = new Vector2(1f, 0f);
@@ -361,7 +394,12 @@ namespace CARE.Core
 
         private GameObject BuildLobbyPanel(Transform parent)
         {
-            GameObject panel = CreateUIBox("LobbyRestorasiPanel", parent, new Color(0.08f, 0.16f, 0.11f, 1f));
+            GameObject panel = CreateFullScreenPanel("LobbyRestorasiPanel", parent, new Color(0.08f, 0.16f, 0.11f, 1f));
+
+            // Background
+            Image bgImg = panel.GetComponent<Image>();
+            Sprite forestBg = Resources.Load<Sprite>("Environtment/image 2614");
+            if (forestBg != null) { bgImg.sprite = forestBg; bgImg.color = new Color(0.4f, 0.4f, 0.4f, 1f); }
 
             // Header
             CreateUIText("LobbyTitle", panel.transform, "LOBBY RESTORASI EKOSISTEM", 46, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 470), new Vector2(1200, 60));
@@ -472,7 +510,7 @@ namespace CARE.Core
 
         private GameObject BuildStageMapPanel(Transform parent)
         {
-            GameObject panel = CreateUIBox("StageMapPanel", parent, new Color(0.06f, 0.12f, 0.16f, 1f));
+            GameObject panel = CreateFullScreenPanel("StageMapPanel", parent, new Color(0.06f, 0.12f, 0.16f, 1f));
 
             CreateUIText("MapTitle", panel.transform, "PETA EKOSISTEM & MISI PENYELAMATAN", 44, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 440), new Vector2(1300, 60));
             CreateUIText("MapSubtitle", panel.transform, "Pilih kawasan terdampak untuk memulai investigasi dan rehabilitasi satwa", 22, Color.white, FontStyle.Normal, new Vector2(0, 390), new Vector2(1300, 40));
@@ -516,10 +554,15 @@ namespace CARE.Core
 
         private GameObject BuildHiddenObjectPanel(Transform parent)
         {
-            GameObject panel = CreateUIBox("HiddenObjectPanel", parent, new Color(0.08f, 0.12f, 0.1f, 1f));
+            GameObject panel = CreateFullScreenPanel("HiddenObjectPanel", parent, new Color(0.08f, 0.12f, 0.1f, 1f));
+
+            // Background
+            Image bgImg = panel.GetComponent<Image>();
+            Sprite forestBg = Resources.Load<Sprite>("Environtment/image 2614");
+            if (forestBg != null) { bgImg.sprite = forestBg; bgImg.color = new Color(0.5f, 0.5f, 0.5f, 1f); }
 
             // Top Header Bar
-            GameObject headerBar = CreateUIBox("HeaderBar", panel.transform, new Color(0.05f, 0.08f, 0.06f, 0.9f));
+            GameObject headerBar = CreateUIBox("HeaderBar", panel.transform, new Color(0.05f, 0.08f, 0.06f, 0.92f));
             RectTransform headerRT = headerBar.GetComponent<RectTransform>();
             headerRT.anchorMin = new Vector2(0f, 0.9f);
             headerRT.anchorMax = new Vector2(1f, 1f);
@@ -557,36 +600,32 @@ namespace CARE.Core
             GameObject spawnAreaObj = new GameObject("ItemSpawnArea");
             spawnAreaObj.transform.SetParent(panel.transform, false);
             RectTransform saRT = spawnAreaObj.AddComponent<RectTransform>();
-            saRT.anchorMin = new Vector2(0.1f, 0.1f);
-            saRT.anchorMax = new Vector2(0.9f, 0.8f);
+            saRT.anchorMin = new Vector2(0.08f, 0.08f);
+            saRT.anchorMax = new Vector2(0.92f, 0.8f);
             saRT.offsetMin = Vector2.zero;
             saRT.offsetMax = Vector2.zero;
 
             // Educational Popup Modal
-            GameObject popupPanel = CreateUIBox("ItemFoundPopup", panel.transform, new Color(0f, 0f, 0f, 0.75f));
-            popupPanel.GetComponent<RectTransform>().anchorMin = Vector2.zero;
-            popupPanel.GetComponent<RectTransform>().anchorMax = Vector2.one;
-            popupPanel.GetComponent<RectTransform>().offsetMin = Vector2.zero;
-            popupPanel.GetComponent<RectTransform>().offsetMax = Vector2.zero;
+            GameObject popupPanel = CreateFullScreenPanel("ItemFoundPopup", panel.transform, new Color(0f, 0f, 0f, 0.78f));
 
             GameObject popupCard = CreateUIBox("PopupCard", popupPanel.transform, new Color(0.12f, 0.18f, 0.15f, 0.98f));
             RectTransform cardRT = popupCard.GetComponent<RectTransform>();
-            cardRT.sizeDelta = new Vector2(720, 520);
+            cardRT.sizeDelta = new Vector2(740, 540);
             cardRT.anchoredPosition = Vector2.zero;
 
-            Text popupTitle = CreateUIText("PopupTitle", popupCard.transform, "OBJEK DITEMUKAN!", 30, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 200), new Vector2(650, 50));
+            Text popupTitle = CreateUIText("PopupTitle", popupCard.transform, "OBJEK DITEMUKAN!", 30, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 205), new Vector2(650, 50));
 
             GameObject popImgObj = new GameObject("PopupItemImage");
             popImgObj.transform.SetParent(popupCard.transform, false);
             RectTransform popImgRT = popImgObj.AddComponent<RectTransform>();
             popImgRT.sizeDelta = new Vector2(160, 160);
-            popImgRT.anchoredPosition = new Vector2(0, 90);
+            popImgRT.anchoredPosition = new Vector2(0, 95);
             Image popupImg = popImgObj.AddComponent<Image>();
             popupImg.preserveAspect = true;
 
-            Text popupNote = CreateUIText("PopupNote", popupCard.transform, "Catatan edukasi...", 22, Color.white, FontStyle.Normal, new Vector2(0, -60), new Vector2(620, 140));
+            Text popupNote = CreateUIText("PopupNote", popupCard.transform, "Catatan edukasi...", 22, Color.white, FontStyle.Normal, new Vector2(0, -55), new Vector2(640, 140));
 
-            Button popupContinueBtn = CreateUIButton("BtnPopupContinue", popupCard.transform, "LANJUT INVESTIGASI ▶", new Vector2(0, -190), new Vector2(360, 60), new Color(0.18f, 0.65f, 0.32f), null);
+            Button popupContinueBtn = CreateUIButton("BtnPopupContinue", popupCard.transform, "LANJUT INVESTIGASI ▶", new Vector2(0, -195), new Vector2(360, 60), new Color(0.18f, 0.65f, 0.32f), null);
 
             popupPanel.SetActive(false);
 
@@ -612,7 +651,7 @@ namespace CARE.Core
 
         private GameObject BuildBossPanel(Transform parent)
         {
-            GameObject panel = CreateUIBox("BossFightPanel", parent, new Color(0.18f, 0.08f, 0.08f, 1f));
+            GameObject panel = CreateFullScreenPanel("BossFightPanel", parent, new Color(0.18f, 0.08f, 0.08f, 1f));
 
             CreateUIText("BossTitle", panel.transform, "KONFRONTASI: DOCTOR SAWIT MAN", 46, new Color(0.95f, 0.3f, 0.3f), FontStyle.Bold, new Vector2(0, 440), new Vector2(1200, 60));
 
@@ -650,7 +689,7 @@ namespace CARE.Core
 
         private GameObject BuildEndingPanel(Transform parent)
         {
-            GameObject panel = CreateUIBox("EndingPanel", parent, new Color(0.06f, 0.15f, 0.1f, 1f));
+            GameObject panel = CreateFullScreenPanel("EndingPanel", parent, new Color(0.06f, 0.15f, 0.1f, 1f));
 
             CreateUIText("VictoryTitle", panel.transform, "MISI SELESAI!", 60, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 380), new Vector2(1000, 80));
             CreateUIText("VictorySubtitle", panel.transform, "EKOSISTEM NUSANTARA BERHASIL DISELAMATKAN", 28, Color.white, FontStyle.Bold, new Vector2(0, 310), new Vector2(1200, 50));
@@ -682,12 +721,7 @@ namespace CARE.Core
 
         private GameObject BuildEncyclopediaModal(Transform parent)
         {
-            GameObject modal = CreateUIBox("EncyclopediaModal", parent, new Color(0f, 0f, 0f, 0.85f));
-            RectTransform modalRT = modal.GetComponent<RectTransform>();
-            modalRT.anchorMin = Vector2.zero;
-            modalRT.anchorMax = Vector2.one;
-            modalRT.offsetMin = Vector2.zero;
-            modalRT.offsetMax = Vector2.zero;
+            GameObject modal = CreateFullScreenPanel("EncyclopediaModal", parent, new Color(0f, 0f, 0f, 0.85f));
 
             // Content Card
             GameObject cardObj = CreateUIBox("ModalCard", modal.transform, new Color(0.1f, 0.16f, 0.12f, 0.98f));
@@ -712,12 +746,7 @@ namespace CARE.Core
             previewImg.preserveAspect = true;
 
             // Locked Overlay (on image)
-            GameObject lockedObj = CreateUIBox("LockedOverlay", previewObj.transform, new Color(0f, 0f, 0f, 0.7f));
-            RectTransform loRT = lockedObj.GetComponent<RectTransform>();
-            loRT.anchorMin = Vector2.zero;
-            loRT.anchorMax = Vector2.one;
-            loRT.offsetMin = Vector2.zero;
-            loRT.offsetMax = Vector2.zero;
+            GameObject lockedObj = CreateFullScreenPanel("LockedOverlay", previewObj.transform, new Color(0f, 0f, 0f, 0.7f));
             CreateUIText("LockText", lockedObj.transform, "🔒\nBELUM DISELEMATKAN", 26, new Color(0.95f, 0.4f, 0.4f), FontStyle.Bold, Vector2.zero, new Vector2(300, 100));
 
             // Quote Text
@@ -763,10 +792,30 @@ namespace CARE.Core
 
         #region UI Factory Helpers
 
+        private GameObject CreateFullScreenPanel(string name, Transform parent, Color bgColor)
+        {
+            GameObject obj = new GameObject(name);
+            obj.transform.SetParent(parent, false);
+
+            RectTransform rt = obj.AddComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
+            Image img = obj.AddComponent<Image>();
+            img.color = bgColor;
+            return obj;
+        }
+
         private GameObject CreateUIBox(string name, Transform parent, Color bgColor)
         {
             GameObject obj = new GameObject(name);
             obj.transform.SetParent(parent, false);
+
+            RectTransform rt = obj.AddComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(100, 100);
+
             Image img = obj.AddComponent<Image>();
             img.color = bgColor;
             return obj;
@@ -804,7 +853,7 @@ namespace CARE.Core
             Button btn = obj.AddComponent<Button>();
             ColorBlock cb = btn.colors;
             cb.normalColor = bgColor;
-            cb.highlightedColor = new Color(bgColor.r * 1.25f, bgColor.g * 1.25f, bgColor.b * 1.25f, 1f);
+            cb.highlightedColor = new Color(Mathf.Min(1f, bgColor.r * 1.25f), Mathf.Min(1f, bgColor.g * 1.25f), Mathf.Min(1f, bgColor.b * 1.25f), 1f);
             cb.pressedColor = new Color(bgColor.r * 0.8f, bgColor.g * 0.8f, bgColor.b * 0.8f, 1f);
             btn.colors = cb;
 
