@@ -242,7 +242,7 @@ namespace CARE.Story
                 "Rusa Timor dapat ditemukan pada habitat seperti savana, padang rumput, hutan musim, dan kawasan yang memiliki kombinasi vegetasi terbuka serta tutupan pohon.",
                 "Rusa Timor merupakan herbivora. Makanannya terutama berupa rerumputan dan berbagai tumbuhan liar.",
                 "Rusa Timor merupakan salah satu jenis rusa asli Indonesia. Habitat dan ketersediaan tumbuhan berperan penting bagi kelangsungan hidupnya.",
-                true // Unlocked after Stage 1 (default unlocked for demo/testing)
+                false // Awalnya terkunci, hanya terbuka setelah menyelesaikan Stage 1 (2 Level Hidden Object + Boss)
             ),
             new AnimalEncyclopediaData(
                 "orangutan",

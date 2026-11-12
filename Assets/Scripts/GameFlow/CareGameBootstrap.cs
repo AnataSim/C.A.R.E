@@ -222,12 +222,16 @@ namespace CARE.Core
                 GameObject canvasObj = new GameObject("Canvas");
                 mainCanvas = canvasObj.AddComponent<Canvas>();
                 mainCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
-                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-                scaler.referenceResolution = new Vector2(1920, 1080);
-                scaler.matchWidthOrHeight = 0.5f;
                 canvasObj.AddComponent<GraphicRaycaster>();
             }
+
+            // Pastikan CanvasScaler selalu terpasang dengan mode skala proporsional (1920x1080)
+            CanvasScaler scaler = mainCanvas.GetComponent<CanvasScaler>();
+            if (scaler == null) scaler = mainCanvas.gameObject.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.matchWidthOrHeight = 0.5f;
 
             // Ensure EventSystem
             if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
@@ -399,42 +403,42 @@ namespace CARE.Core
             // Background
             Image bgImg = panel.GetComponent<Image>();
             Sprite forestBg = Resources.Load<Sprite>("Environtment/image 2614");
-            if (forestBg != null) { bgImg.sprite = forestBg; bgImg.color = new Color(0.4f, 0.4f, 0.4f, 1f); }
+            if (forestBg != null) { bgImg.sprite = forestBg; bgImg.color = new Color(0.35f, 0.35f, 0.35f, 1f); }
 
             // Header
-            CreateUIText("LobbyTitle", panel.transform, "LOBBY RESTORASI EKOSISTEM", 46, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 470), new Vector2(1200, 60));
-            CreateUIText("LobbySubtitle", panel.transform, "Pusat Konservasi, Evakuasi, dan Rehabilitasi Satwa Liar", 22, new Color(0.85f, 0.95f, 0.85f), FontStyle.Normal, new Vector2(0, 420), new Vector2(1200, 40));
+            CreateUIText("LobbyTitle", panel.transform, "LOBBY RESTORASI EKOSISTEM", 40, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 420), new Vector2(1200, 50));
+            CreateUIText("LobbySubtitle", panel.transform, "Pusat Konservasi, Evakuasi, dan Rehabilitasi Satwa Liar", 20, new Color(0.85f, 0.95f, 0.85f), FontStyle.Normal, new Vector2(0, 375), new Vector2(1200, 35));
 
-            lobbyProgressText = CreateUIText("ProgressText", panel.transform, "Satwa Terselamatkan: 0 / 3", 26, new Color(0.4f, 0.95f, 0.5f), FontStyle.Bold, new Vector2(0, 360), new Vector2(600, 40));
+            lobbyProgressText = CreateUIText("ProgressText", panel.transform, "Satwa Terselamatkan: 0 / 3", 24, new Color(0.4f, 0.95f, 0.5f), FontStyle.Bold, new Vector2(0, 335), new Vector2(600, 35));
 
             // 3 Habitat Cards Container
             GameObject cardsContainer = new GameObject("CardsContainer");
             cardsContainer.transform.SetParent(panel.transform, false);
             RectTransform ccRT = cardsContainer.AddComponent<RectTransform>();
-            ccRT.sizeDelta = new Vector2(1400, 520);
-            ccRT.anchoredPosition = new Vector2(0, 40);
+            ccRT.sizeDelta = new Vector2(1260, 460);
+            ccRT.anchoredPosition = new Vector2(0, 25);
 
             // Card 1: Rusa Timor
-            BuildAnimalCard(cardsContainer.transform, -450, "rusa_timor", "Rusa Timor", "Stage 1", out rusaCardImage, out rusaCardStatus);
+            BuildAnimalCard(cardsContainer.transform, -420, "rusa_timor", "Rusa Timor", "Stage 1", out rusaCardImage, out rusaCardStatus);
 
             // Card 2: Orangutan
             BuildAnimalCard(cardsContainer.transform, 0, "orangutan", "Orangutan", "Stage 2", out orangutanCardImage, out orangutanCardStatus);
 
             // Card 3: Gajah Asia
-            BuildAnimalCard(cardsContainer.transform, 450, "gajah_asia", "Gajah Asia", "Stage 3", out gajahCardImage, out gajahCardStatus);
+            BuildAnimalCard(cardsContainer.transform, 420, "gajah_asia", "Gajah Asia", "Stage 3", out gajahCardImage, out gajahCardStatus);
 
             // Bottom Buttons
-            CreateUIButton("BtnMulaiMisi", panel.transform, "🗺️ MULAI MISI (PETA TAHAPAN)", new Vector2(0, -390), new Vector2(460, 75), new Color(0.18f, 0.65f, 0.32f), () =>
+            CreateUIButton("BtnMulaiMisi", panel.transform, "🗺️ MULAI MISI (PETA TAHAPAN)", new Vector2(0, -320), new Vector2(460, 70), new Color(0.18f, 0.65f, 0.32f), () =>
             {
                 if (GameFlowManager.Instance != null) GameFlowManager.Instance.OpenStageMap();
             });
 
-            CreateUIButton("BtnMenuUtama", panel.transform, "🏠 MENU UTAMA", new Vector2(-540, -390), new Vector2(260, 60), new Color(0.28f, 0.35f, 0.38f), () =>
+            CreateUIButton("BtnMenuUtama", panel.transform, "🏠 MENU UTAMA", new Vector2(-460, -320), new Vector2(240, 58), new Color(0.28f, 0.35f, 0.38f), () =>
             {
                 if (GameFlowManager.Instance != null) GameFlowManager.Instance.ShowTitleScreen();
             });
 
-            CreateUIButton("BtnEnsiklopediaAll", panel.transform, "📖 ENSIKLOPEDIA", new Vector2(540, -390), new Vector2(260, 60), new Color(0.2f, 0.45f, 0.65f), () =>
+            CreateUIButton("BtnEnsiklopediaAll", panel.transform, "📖 ENSIKLOPEDIA", new Vector2(460, -320), new Vector2(240, 58), new Color(0.2f, 0.45f, 0.65f), () =>
             {
                 if (EncyclopediaManager.Instance != null) EncyclopediaManager.Instance.OpenEncyclopedia("rusa_timor");
             });
@@ -445,29 +449,29 @@ namespace CARE.Core
 
         private void BuildAnimalCard(Transform container, float posX, string animalKey, string animalName, string stageTag, out Image cardImg, out Text statusTxt)
         {
-            GameObject cardObj = CreateUIBox("Card_" + animalKey, container, new Color(0.12f, 0.2f, 0.15f, 0.95f));
+            GameObject cardObj = CreateUIBox("Card_" + animalKey, container, new Color(0.1f, 0.18f, 0.14f, 0.95f));
             RectTransform cardRT = cardObj.GetComponent<RectTransform>();
-            cardRT.sizeDelta = new Vector2(380, 480);
+            cardRT.sizeDelta = new Vector2(360, 440);
             cardRT.anchoredPosition = new Vector2(posX, 0);
 
             // Animal Preview Image
             GameObject imgObj = new GameObject("AnimalPreview");
             imgObj.transform.SetParent(cardObj.transform, false);
             RectTransform imgRT = imgObj.AddComponent<RectTransform>();
-            imgRT.sizeDelta = new Vector2(280, 240);
-            imgRT.anchoredPosition = new Vector2(0, 80);
+            imgRT.sizeDelta = new Vector2(240, 210);
+            imgRT.anchoredPosition = new Vector2(0, 85);
             cardImg = imgObj.AddComponent<Image>();
             cardImg.preserveAspect = true;
 
             // Name
-            CreateUIText("AnimalName", cardObj.transform, animalName, 26, Color.white, FontStyle.Bold, new Vector2(0, -65), new Vector2(340, 40));
+            CreateUIText("AnimalName", cardObj.transform, animalName, 24, Color.white, FontStyle.Bold, new Vector2(0, -45), new Vector2(320, 35));
 
             // Status
-            statusTxt = CreateUIText("AnimalStatus", cardObj.transform, "🔒 Terancam di " + stageTag, 20, new Color(0.95f, 0.5f, 0.4f), FontStyle.Normal, new Vector2(0, -105), new Vector2(340, 35));
+            statusTxt = CreateUIText("AnimalStatus", cardObj.transform, "🔒 Terancam di " + stageTag, 18, new Color(0.95f, 0.5f, 0.4f), FontStyle.Normal, new Vector2(0, -85), new Vector2(320, 30));
 
             // Button View Encyclopedia
             string key = animalKey;
-            CreateUIButton("BtnView", cardObj.transform, "📖 Buka Info Satwa", new Vector2(0, -170), new Vector2(280, 50), new Color(0.2f, 0.5f, 0.4f), () =>
+            CreateUIButton("BtnView", cardObj.transform, "📖 Buka Info Satwa", new Vector2(0, -150), new Vector2(260, 48), new Color(0.18f, 0.48f, 0.38f), () =>
             {
                 if (EncyclopediaManager.Instance != null) EncyclopediaManager.Instance.OpenEncyclopedia(key);
             });
@@ -512,20 +516,20 @@ namespace CARE.Core
         {
             GameObject panel = CreateFullScreenPanel("StageMapPanel", parent, new Color(0.06f, 0.12f, 0.16f, 1f));
 
-            CreateUIText("MapTitle", panel.transform, "PETA EKOSISTEM & MISI PENYELAMATAN", 44, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 440), new Vector2(1300, 60));
-            CreateUIText("MapSubtitle", panel.transform, "Pilih kawasan terdampak untuk memulai investigasi dan rehabilitasi satwa", 22, Color.white, FontStyle.Normal, new Vector2(0, 390), new Vector2(1300, 40));
+            CreateUIText("MapTitle", panel.transform, "PETA EKOSISTEM & MISI PENYELAMATAN", 40, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 420), new Vector2(1300, 50));
+            CreateUIText("MapSubtitle", panel.transform, "Pilih kawasan terdampak untuk memulai investigasi dan rehabilitasi satwa", 20, Color.white, FontStyle.Normal, new Vector2(0, 375), new Vector2(1300, 35));
 
             // Stage 1 Card
-            BuildStageCard(panel.transform, -450, "STAGE 1", "HUTAN DATARAN RENDAH", "Target: Rusa Timor\nInvestigasi Area Hutan Terbakar", 1, new Color(0.18f, 0.55f, 0.3f));
+            BuildStageCard(panel.transform, -420, "STAGE 1", "HUTAN DATARAN RENDAH", "Target: Rusa Timor\nInvestigasi Area Hutan Terbakar", 1, new Color(0.18f, 0.55f, 0.3f));
 
             // Stage 2 Card
             BuildStageCard(panel.transform, 0, "STAGE 2", "HUTAN RAWA GAMBUT", "Target: Orangutan\nInvestigasi Kanal & Pembalakan Ilegal", 2, new Color(0.55f, 0.4f, 0.15f));
 
             // Stage 3 Card
-            BuildStageCard(panel.transform, 450, "STAGE 3", "KORIDOR PEGUNUNGAN", "Target: Gajah Asia & Doctor Sawit Man\nEvakuasi & Konfrontasi Terakhir", 3, new Color(0.65f, 0.2f, 0.2f));
+            BuildStageCard(panel.transform, 420, "STAGE 3", "KORIDOR PEGUNUNGAN", "Target: Gajah Asia & Doctor Sawit Man\nEvakuasi & Konfrontasi Terakhir", 3, new Color(0.65f, 0.2f, 0.2f));
 
             // Back button
-            CreateUIButton("BtnBackLobby", panel.transform, "⬅️ KEMBALI KE LOBBY", new Vector2(0, -410), new Vector2(360, 65), new Color(0.3f, 0.35f, 0.4f), () =>
+            CreateUIButton("BtnBackLobby", panel.transform, "⬅️ KEMBALI KE LOBBY", new Vector2(0, -320), new Vector2(340, 65), new Color(0.3f, 0.35f, 0.4f), () =>
             {
                 if (GameFlowManager.Instance != null) GameFlowManager.Instance.ShowLobbyRestorasi();
             });
@@ -538,15 +542,15 @@ namespace CARE.Core
         {
             GameObject cardObj = CreateUIBox("StageCard_" + stageNum, container, new Color(themeColor.r * 0.4f, themeColor.g * 0.4f, themeColor.b * 0.4f, 0.95f));
             RectTransform cardRT = cardObj.GetComponent<RectTransform>();
-            cardRT.sizeDelta = new Vector2(390, 520);
+            cardRT.sizeDelta = new Vector2(360, 440);
             cardRT.anchoredPosition = new Vector2(posX, 20);
 
-            CreateUIText("Tag", cardObj.transform, tag, 28, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 200), new Vector2(350, 40));
-            CreateUIText("Title", cardObj.transform, title, 24, Color.white, FontStyle.Bold, new Vector2(0, 140), new Vector2(350, 60));
-            CreateUIText("Desc", cardObj.transform, desc, 20, new Color(0.85f, 0.9f, 0.85f), FontStyle.Normal, new Vector2(0, 30), new Vector2(340, 120));
+            CreateUIText("Tag", cardObj.transform, tag, 26, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 170), new Vector2(330, 40));
+            CreateUIText("Title", cardObj.transform, title, 22, Color.white, FontStyle.Bold, new Vector2(0, 115), new Vector2(330, 55));
+            CreateUIText("Desc", cardObj.transform, desc, 18, new Color(0.85f, 0.9f, 0.85f), FontStyle.Normal, new Vector2(0, 15), new Vector2(320, 110));
 
             int sNum = stageNum;
-            CreateUIButton("BtnStartStage", cardObj.transform, "▶ MULAI TAHAP INI", new Vector2(0, -180), new Vector2(320, 65), themeColor, () =>
+            CreateUIButton("BtnStartStage", cardObj.transform, "▶ MULAI TAHAP INI", new Vector2(0, -150), new Vector2(300, 60), themeColor, () =>
             {
                 if (GameFlowManager.Instance != null) GameFlowManager.Instance.StartStage(sNum);
             });
