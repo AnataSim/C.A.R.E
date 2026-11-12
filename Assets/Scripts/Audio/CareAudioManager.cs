@@ -112,3 +112,4 @@ namespace CARE.Audio
         public void PlayAnimalUnlockSFX() => PlaySFX(sfxAnimalUnlock);
     }
 }
+
