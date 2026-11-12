@@ -277,9 +277,81 @@ namespace CARE.Core
 
         private void WireExistingTitlePanel(Transform panel)
         {
+            // 1. Nonaktifkan Image ganda pada MainPanel agar tidak menumpuk background ganda
+            Image mainPanelImg = panel.GetComponent<Image>();
+            if (mainPanelImg != null)
+            {
+                mainPanelImg.enabled = false;
+            }
+
+            // 2. Format Environment (Latar belakang hutan terbakar) agar mengisi layar penuh secara rapi
+            Transform env = panel.Find("Environment");
+            if (env != null)
+            {
+                RectTransform envRT = env.GetComponent<RectTransform>();
+                if (envRT != null)
+                {
+                    envRT.anchorMin = Vector2.zero;
+                    envRT.anchorMax = Vector2.one;
+                    envRT.offsetMin = Vector2.zero;
+                    envRT.offsetMax = Vector2.zero;
+                    envRT.anchoredPosition = Vector2.zero;
+                }
+                Image envImg = env.GetComponent<Image>();
+                if (envImg != null)
+                {
+                    envImg.preserveAspect = false;
+                    envImg.color = Color.white;
+                }
+            }
+
+            // 3. Posisikan Logo C.A.R.E. (Button_Group) di tengah atas (Upper-Center) di atas pohon & asap
+            Transform groupBtn = panel.Find("Button_Group");
+            if (groupBtn != null)
+            {
+                RectTransform grpRT = groupBtn.GetComponent<RectTransform>();
+                if (grpRT != null)
+                {
+                    grpRT.anchorMin = new Vector2(0.5f, 0.68f);
+                    grpRT.anchorMax = new Vector2(0.5f, 0.68f);
+                    grpRT.pivot = new Vector2(0.5f, 0.5f);
+                    grpRT.anchoredPosition = Vector2.zero;
+                    grpRT.sizeDelta = new Vector2(760, 270);
+                }
+                Image grpImg = groupBtn.GetComponent<Image>();
+                if (grpImg != null)
+                {
+                    grpImg.preserveAspect = true;
+                }
+                Button btn = groupBtn.GetComponent<Button>();
+                if (btn != null)
+                {
+                    btn.onClick.RemoveAllListeners();
+                    btn.onClick.AddListener(() =>
+                    {
+                        if (CareAudioManager.Instance != null) CareAudioManager.Instance.PlayItemFoundSFX();
+                    });
+                }
+            }
+
+            // 4. Posisikan Tombol Mulai (Button_Play) secara proporsional di tengah layar
             Transform playBtn = panel.Find("Button_Play");
             if (playBtn != null)
             {
+                RectTransform playRT = playBtn.GetComponent<RectTransform>();
+                if (playRT != null)
+                {
+                    playRT.anchorMin = new Vector2(0.5f, 0.38f);
+                    playRT.anchorMax = new Vector2(0.5f, 0.38f);
+                    playRT.pivot = new Vector2(0.5f, 0.5f);
+                    playRT.anchoredPosition = Vector2.zero;
+                    playRT.sizeDelta = new Vector2(380, 125);
+                }
+                Image playImg = playBtn.GetComponent<Image>();
+                if (playImg != null)
+                {
+                    playImg.preserveAspect = true;
+                }
                 Button btn = playBtn.GetComponent<Button>();
                 if (btn == null) btn = playBtn.gameObject.AddComponent<Button>();
                 btn.onClick.RemoveAllListeners();
@@ -291,18 +363,21 @@ namespace CARE.Core
                 });
             }
 
-            Transform groupBtn = panel.Find("Button_Group");
-            if (groupBtn != null)
+            // 5. Tombol Navigasi Menuju Lobby Restorasi
+            Transform existingLobbyBtn = panel.Find("BtnNavLobby");
+            if (existingLobbyBtn == null)
             {
-                Button btn = groupBtn.GetComponent<Button>();
-                if (btn == null) btn = groupBtn.gameObject.AddComponent<Button>();
-                btn.onClick.RemoveAllListeners();
-                btn.onClick.AddListener(() =>
+                GameObject lbObj = CreateUIButton("BtnNavLobby", panel, "🐾 LOBBY RESTORASI", new Vector2(0, 0), new Vector2(360, 65), new Color(0.18f, 0.65f, 0.32f), () =>
                 {
                     Debug.Log("[C.A.R.E.] Tombol Lobby Restorasi diklik!");
                     if (CareAudioManager.Instance != null) CareAudioManager.Instance.PlayTransitionSFX();
                     if (GameFlowManager.Instance != null) GameFlowManager.Instance.ShowLobbyRestorasi();
                 });
+                RectTransform lbRT = lbObj.GetComponent<RectTransform>();
+                lbRT.anchorMin = new Vector2(0.5f, 0.23f);
+                lbRT.anchorMax = new Vector2(0.5f, 0.23f);
+                lbRT.pivot = new Vector2(0.5f, 0.5f);
+                lbRT.anchoredPosition = Vector2.zero;
             }
         }
 
