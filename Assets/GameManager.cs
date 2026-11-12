@@ -59,13 +59,17 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        // Navigasi cepat untuk pengujian di Play Mode:
-        // Tekan Panah Kanan atau Spasi untuk berpindah ke panel berikutnya
-        if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.Space))
+        // Jika sistem alur cerita CARE sedang aktif, biarkan sistem game mengontrol layar
+        if (CARE.Core.GameFlowManager.Instance != null && CARE.Core.GameFlowManager.Instance.currentState != CARE.Core.GameState.TitleScreen)
+        {
+            return;
+        }
+
+        // Navigasi cepat untuk pengujian panel di Play Mode:
+        if (Input.GetKeyDown(KeyCode.RightArrow))
         {
             NextPanel();
         }
-        // Tekan Panah Kiri untuk kembali ke panel sebelumnya
         else if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
             PreviousPanel();

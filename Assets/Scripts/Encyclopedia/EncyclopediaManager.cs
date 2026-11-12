@@ -41,10 +41,42 @@ namespace CARE.UI
             }
             Instance = this;
 
+            if (audioSource == null)
+            {
+                audioSource = GetComponent<AudioSource>();
+                if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
+                audioSource.playOnAwake = false;
+                audioSource.spatialBlend = 0f;
+            }
+
+            if (tabChangeSFX == null) tabChangeSFX = Resources.Load<AudioClip>("Audio/sfx_page");
+
             if (taxonomyTabButton != null) taxonomyTabButton.onClick.AddListener(() => SwitchTab(TabType.Taxonomy));
             if (habitatTabButton != null) habitatTabButton.onClick.AddListener(() => SwitchTab(TabType.Habitat));
             if (dietTabButton != null) dietTabButton.onClick.AddListener(() => SwitchTab(TabType.Diet));
             if (closeButton != null) closeButton.onClick.AddListener(ClosePanel);
+
+            if (encyclopediaPanel != null) encyclopediaPanel.SetActive(false);
+        }
+
+        public void SetupUI(GameObject panel, Text common, Text sci, Text quote, Text body, Image preview, GameObject locked, Button tabTax, Button tabHab, Button tabDiet, Button close)
+        {
+            encyclopediaPanel = panel;
+            commonNameText = common;
+            scientificNameText = sci;
+            openingQuoteText = quote;
+            contentBodyText = body;
+            animalPreviewImage = preview;
+            lockedOverlay = locked;
+            taxonomyTabButton = tabTax;
+            habitatTabButton = tabHab;
+            dietTabButton = tabDiet;
+            closeButton = close;
+
+            if (taxonomyTabButton != null) { taxonomyTabButton.onClick.RemoveAllListeners(); taxonomyTabButton.onClick.AddListener(() => SwitchTab(TabType.Taxonomy)); }
+            if (habitatTabButton != null) { habitatTabButton.onClick.RemoveAllListeners(); habitatTabButton.onClick.AddListener(() => SwitchTab(TabType.Habitat)); }
+            if (dietTabButton != null) { dietTabButton.onClick.RemoveAllListeners(); dietTabButton.onClick.AddListener(() => SwitchTab(TabType.Diet)); }
+            if (closeButton != null) { closeButton.onClick.RemoveAllListeners(); closeButton.onClick.AddListener(ClosePanel); }
 
             if (encyclopediaPanel != null) encyclopediaPanel.SetActive(false);
         }

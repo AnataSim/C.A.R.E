@@ -63,6 +63,27 @@ namespace CARE.Audio
                 sfxSource.loop = false;
                 sfxSource.spatialBlend = 0f;
             }
+
+            // Auto-load audio resources if not assigned
+            if (bgmMainMenu == null) bgmMainMenu = Resources.Load<AudioClip>("Audio/bgm_soft_piano");
+            if (bgmStorySad == null) bgmStorySad = Resources.Load<AudioClip>("Audio/bgm_soft_piano");
+            if (bgmRestorationHub == null) bgmRestorationHub = Resources.Load<AudioClip>("Audio/bgm_nature_hub");
+            if (bgmInvestigation == null) bgmInvestigation = Resources.Load<AudioClip>("Audio/bgm_danger");
+            if (bgmBossSawitMan == null) bgmBossSawitMan = Resources.Load<AudioClip>("Audio/bgm_boss");
+            if (bgmEnding == null) bgmEnding = Resources.Load<AudioClip>("Audio/bgm_nature_hub");
+
+            if (ambForestFire == null) ambForestFire = Resources.Load<AudioClip>("Audio/amb_fire");
+            if (ambTropicalMorning == null) ambTropicalMorning = Resources.Load<AudioClip>("Audio/amb_rain_birds");
+
+            if (sfxTypewriter == null) sfxTypewriter = Resources.Load<AudioClip>("Audio/sfx_click");
+            if (sfxItemFound == null) sfxItemFound = Resources.Load<AudioClip>("Audio/sfx_bell");
+            if (sfxWrongClick == null) sfxWrongClick = Resources.Load<AudioClip>("Audio/sfx_click");
+            if (sfxTransition == null) sfxTransition = Resources.Load<AudioClip>("Audio/sfx_whoosh");
+            if (sfxLevelClear == null) sfxLevelClear = Resources.Load<AudioClip>("Audio/sfx_bonus");
+            if (sfxStageClear == null) sfxStageClear = Resources.Load<AudioClip>("Audio/sfx_bonus");
+            if (sfxAnimalUnlock == null) sfxAnimalUnlock = Resources.Load<AudioClip>("Audio/sfx_badge");
+            if (sfxHit == null) sfxHit = Resources.Load<AudioClip>("Audio/sfx_hit");
+            if (sfxBossDefeat == null) sfxBossDefeat = Resources.Load<AudioClip>("Audio/sfx_badge");
         }
 
         public void PlayBGM(AudioClip clip, float volume = 0.8f)

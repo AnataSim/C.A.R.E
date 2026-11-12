@@ -23,6 +23,7 @@ namespace CARE.UI
         [Header("Portraits")]
         [SerializeField] private Sprite penjelajahPortrait;
         [SerializeField] private Sprite sawitManPortrait;
+        [SerializeField] private Sprite monyetPortrait;
 
         [Header("Settings")]
         [SerializeField] private float typingSpeed = 0.035f;
@@ -53,12 +54,35 @@ namespace CARE.UI
                 audioSource.spatialBlend = 0f;
             }
 
+            // Auto-load resources if not assigned
+            if (penjelajahPortrait == null) penjelajahPortrait = Resources.Load<Sprite>("TemporaryAssets/Characters/penjelajah_portrait");
+            if (sawitManPortrait == null) sawitManPortrait = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_portrait");
+            if (monyetPortrait == null) monyetPortrait = Resources.Load<Sprite>("TemporaryAssets/Characters/monyet_terdampak");
+            if (typewriterSFX == null) typewriterSFX = Resources.Load<AudioClip>("Audio/sfx_click");
+
             if (continueButton != null)
             {
                 continueButton.onClick.AddListener(OnContinuePressed);
             }
 
             // Hide on start
+            if (dialoguePanel != null) dialoguePanel.SetActive(false);
+        }
+
+        public void SetupUI(GameObject panel, Text speaker, Text body, Image portrait, Button btn, GameObject indicator = null)
+        {
+            dialoguePanel = panel;
+            speakerNameText = speaker;
+            dialogueBodyText = body;
+            portraitImage = portrait;
+            continueButton = btn;
+            continueIndicator = indicator;
+
+            if (continueButton != null)
+            {
+                continueButton.onClick.RemoveAllListeners();
+                continueButton.onClick.AddListener(OnContinuePressed);
+            }
             if (dialoguePanel != null) dialoguePanel.SetActive(false);
         }
 
@@ -107,10 +131,23 @@ namespace CARE.UI
                     portraitImage.gameObject.SetActive(true);
                     portraitImage.sprite = sawitManPortrait;
                 }
+                else if (line.portraitKey == "monyet" && monyetPortrait != null)
+                {
+                    portraitImage.gameObject.SetActive(true);
+                    portraitImage.sprite = monyetPortrait;
+                }
                 else
                 {
                     portraitImage.gameObject.SetActive(false);
                 }
+            }
+
+            // SFX Cue handling
+            if (!string.IsNullOrEmpty(line.sfxCue) && CARE.Audio.CareAudioManager.Instance != null)
+            {
+                if (line.sfxCue.Contains("fire")) CARE.Audio.CareAudioManager.Instance.PlayFireAmbience();
+                else if (line.sfxCue.Contains("nature") || line.sfxCue.Contains("morning")) CARE.Audio.CareAudioManager.Instance.PlayMorningAmbience();
+                else if (line.sfxCue.Contains("bell") || line.sfxCue.Contains("item")) CARE.Audio.CareAudioManager.Instance.PlayItemFoundSFX();
             }
 
             if (continueIndicator != null) continueIndicator.SetActive(false);

@@ -15,6 +15,7 @@ namespace CARE.Gameplay
         [SerializeField] private Text locationTitleText;
         [SerializeField] private Transform itemListContainer;
         [SerializeField] private GameObject itemLabelPrefab;
+        [SerializeField] private Transform itemSpawnArea;
 
         [Header("Item Found Popup")]
         [SerializeField] private GameObject itemPopupPanel;
@@ -42,8 +43,42 @@ namespace CARE.Gameplay
             }
             Instance = this;
 
+            if (audioSource == null)
+            {
+                audioSource = GetComponent<AudioSource>();
+                if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
+                audioSource.playOnAwake = false;
+                audioSource.spatialBlend = 0f;
+            }
+
+            if (itemFoundSFX == null) itemFoundSFX = Resources.Load<AudioClip>("Audio/sfx_bell");
+            if (wrongClickSFX == null) wrongClickSFX = Resources.Load<AudioClip>("Audio/sfx_click");
+            if (levelCompleteSFX == null) levelCompleteSFX = Resources.Load<AudioClip>("Audio/sfx_bonus");
+
             if (popupContinueButton != null)
             {
+                popupContinueButton.onClick.AddListener(ClosePopup);
+            }
+
+            if (itemPopupPanel != null) itemPopupPanel.SetActive(false);
+            if (gameplayPanel != null) gameplayPanel.SetActive(false);
+        }
+
+        public void SetupUI(GameObject gamePanel, Text title, Transform listContainer, Transform spawnArea, GameObject popupPanel, Text popupName, Text popupNote, Image popupImg, Button popupBtn)
+        {
+            gameplayPanel = gamePanel;
+            locationTitleText = title;
+            itemListContainer = listContainer;
+            itemSpawnArea = spawnArea;
+            itemPopupPanel = popupPanel;
+            popupItemNameText = popupName;
+            popupNoteText = popupNote;
+            popupItemImage = popupImg;
+            popupContinueButton = popupBtn;
+
+            if (popupContinueButton != null)
+            {
+                popupContinueButton.onClick.RemoveAllListeners();
                 popupContinueButton.onClick.AddListener(ClosePopup);
             }
 
@@ -61,6 +96,78 @@ namespace CARE.Gameplay
             if (locationTitleText != null) locationTitleText.text = "AREA INVESTIGASI: " + locationName.ToUpper();
 
             RefreshItemListUI();
+            SpawnClickableItems();
+        }
+
+        public void SetItemSpawnArea(Transform area)
+        {
+            itemSpawnArea = area;
+        }
+
+        private Sprite LoadItemSprite(HiddenItemData item)
+        {
+            for (int s = 1; s <= 3; s++)
+            {
+                for (int l = 1; l <= 2; l++)
+                {
+                    Sprite sp = Resources.Load<Sprite>($"TemporaryAssets/HiddenObjects/Stage{s}_Level{l}/{item.spriteName}");
+                    if (sp != null) return sp;
+                }
+            }
+            Sprite direct = Resources.Load<Sprite>($"TemporaryAssets/HiddenObjects/{item.spriteName}");
+            if (direct != null) return direct;
+
+            return Resources.Load<Sprite>("TemporaryAssets/UI/icon_check");
+        }
+
+        private void SpawnClickableItems()
+        {
+            if (itemSpawnArea == null || currentItems == null) return;
+
+            // Clear previous items
+            foreach (Transform child in itemSpawnArea)
+            {
+                Destroy(child.gameObject);
+            }
+
+            // Balanced distributed coordinates across standard 1920x1080 canvas
+            Vector2[] defaultPositions = new Vector2[]
+            {
+                new Vector2(-420, 80),
+                new Vector2(-200, -140),
+                new Vector2(30, 120),
+                new Vector2(240, -80),
+                new Vector2(440, 140)
+            };
+
+            for (int i = 0; i < currentItems.Count; i++)
+            {
+                var item = currentItems[i];
+                Sprite itemSprite = LoadItemSprite(item);
+
+                GameObject itemObj = new GameObject("HiddenItem_" + item.itemName);
+                itemObj.transform.SetParent(itemSpawnArea, false);
+
+                RectTransform rt = itemObj.AddComponent<RectTransform>();
+                rt.sizeDelta = new Vector2(90, 90);
+                Vector2 pos = i < defaultPositions.Length ? defaultPositions[i] : new Vector2(UnityEngine.Random.Range(-400, 400), UnityEngine.Random.Range(-150, 150));
+                rt.anchoredPosition = pos;
+
+                Image img = itemObj.AddComponent<Image>();
+                img.sprite = itemSprite;
+                img.preserveAspect = true;
+
+                Button btn = itemObj.AddComponent<Button>();
+                string capturedName = item.itemName;
+                Sprite capturedSprite = itemSprite;
+                GameObject capturedObj = itemObj;
+
+                btn.onClick.AddListener(() =>
+                {
+                    OnItemClicked(capturedName, capturedSprite);
+                    if (capturedObj != null) capturedObj.SetActive(false);
+                });
+            }
         }
 
         private void RefreshItemListUI()

@@ -46,6 +46,17 @@ namespace CARE.Core
             Instance = this;
         }
 
+        public void SetupPanels(GameObject title, GameObject story, GameObject lobby, GameObject stageMap, GameObject hiddenObj, GameObject boss, GameObject ending)
+        {
+            titleScreenPanel = title;
+            openingStoryPanel = story;
+            lobbyRestorasiPanel = lobby;
+            stageMapPanel = stageMap;
+            hiddenObjectPanel = hiddenObj;
+            bossFightPanel = boss;
+            endingPanel = ending;
+        }
+
         private void Start()
         {
             ShowTitleScreen();
