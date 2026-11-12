@@ -14,6 +14,7 @@ namespace CARE.UI
 
         [Header("UI References")]
         [SerializeField] private GameObject dialoguePanel;
+        [SerializeField] private Image backgroundImage;
         [SerializeField] private Text speakerNameText;
         [SerializeField] private Text dialogueBodyText;
         [SerializeField] private Image portraitImage;
@@ -69,7 +70,7 @@ namespace CARE.UI
             if (dialoguePanel != null) dialoguePanel.SetActive(false);
         }
 
-        public void SetupUI(GameObject panel, Text speaker, Text body, Image portrait, Button btn, GameObject indicator = null)
+        public void SetupUI(GameObject panel, Text speaker, Text body, Image portrait, Button btn, GameObject indicator = null, Image bg = null)
         {
             dialoguePanel = panel;
             speakerNameText = speaker;
@@ -77,6 +78,8 @@ namespace CARE.UI
             portraitImage = portrait;
             continueButton = btn;
             continueIndicator = indicator;
+            if (bg != null) backgroundImage = bg;
+            else if (panel != null) backgroundImage = panel.GetComponent<Image>();
 
             if (continueButton != null)
             {
@@ -84,6 +87,15 @@ namespace CARE.UI
                 continueButton.onClick.AddListener(OnContinuePressed);
             }
             if (dialoguePanel != null) dialoguePanel.SetActive(false);
+        }
+
+        public void SetBackground(Sprite bg)
+        {
+            if (backgroundImage != null && bg != null)
+            {
+                backgroundImage.sprite = bg;
+                backgroundImage.color = Color.white;
+            }
         }
 
         /// <summary>
@@ -116,6 +128,24 @@ namespace CARE.UI
             if (speakerNameText != null)
             {
                 speakerNameText.text = line.speaker;
+            }
+
+            // Set Background if specified in line
+            if (!string.IsNullOrEmpty(line.backgroundKey))
+            {
+                Sprite bgSprite = Resources.Load<Sprite>(line.backgroundKey);
+                if (bgSprite != null)
+                {
+                    if (backgroundImage == null && dialoguePanel != null)
+                    {
+                        backgroundImage = dialoguePanel.GetComponent<Image>();
+                    }
+                    if (backgroundImage != null)
+                    {
+                        backgroundImage.sprite = bgSprite;
+                        backgroundImage.color = Color.white;
+                    }
+                }
             }
 
             // Set Portrait

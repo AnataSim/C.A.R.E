@@ -309,15 +309,30 @@ namespace CARE.Core
         private GameObject BuildTitlePanel(Transform parent)
         {
             GameObject panel = CreateFullScreenPanel("TitlePanel", parent, new Color(0.08f, 0.14f, 0.1f, 1f));
-            CreateUIText("TitleText", panel.transform, "C.A.R.E.", 80, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 150), new Vector2(900, 120));
-            CreateUIText("SubtitleText", panel.transform, "Cegah. Api. Rawat. Ekosistem.", 28, Color.white, FontStyle.Normal, new Vector2(0, 60), new Vector2(900, 60));
+            Image bgImg = panel.GetComponent<Image>();
+            Sprite titleBg = Resources.Load<Sprite>("Environtment/title_screen_bg");
+            if (titleBg == null) titleBg = Resources.Load<Sprite>("Environtment/image 2614");
+            if (titleBg != null)
+            {
+                bgImg.sprite = titleBg;
+                bgImg.color = Color.white;
+            }
 
-            CreateUIButton("BtnPlay", panel.transform, "▶ MULAI PETUALANGAN", new Vector2(0, -60), new Vector2(360, 65), new Color(0.18f, 0.65f, 0.32f), () =>
+            // Jika titleBg belum ada, tampilkan teks judul alternatif
+            if (titleBg == null)
+            {
+                CreateUIText("TitleText", panel.transform, "C.A.R.E.", 80, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 150), new Vector2(900, 120));
+                CreateUIText("SubtitleText", panel.transform, "Cegah. Api. Rawat. Ekosistem.", 28, Color.white, FontStyle.Normal, new Vector2(0, 60), new Vector2(900, 60));
+            }
+
+            // Tombol Mulai dengan gaya gradien emas-oranye sesuai desain Figma
+            CreateUIButton("BtnPlay", panel.transform, "▶ MULAI PETUALANGAN", new Vector2(0, -180), new Vector2(440, 75), new Color(0.96f, 0.72f, 0.16f), () =>
             {
                 if (GameFlowManager.Instance != null) GameFlowManager.Instance.StartOpeningStory();
             });
 
-            CreateUIButton("BtnLobby", panel.transform, "🐾 LOBBY RESTORASI", new Vector2(0, -145), new Vector2(360, 60), new Color(0.2f, 0.45f, 0.65f), () =>
+            // Tombol Lobby Restorasi
+            CreateUIButton("BtnLobby", panel.transform, "🐾 LOBBY RESTORASI", new Vector2(0, -270), new Vector2(400, 65), new Color(0.18f, 0.65f, 0.32f), () =>
             {
                 if (GameFlowManager.Instance != null) GameFlowManager.Instance.ShowLobbyRestorasi();
             });
@@ -335,7 +350,7 @@ namespace CARE.Core
             if (forestBg != null)
             {
                 bgImg.sprite = forestBg;
-                bgImg.color = new Color(0.55f, 0.55f, 0.55f, 1f);
+                bgImg.color = Color.white;
             }
 
             // Large Portrait (Left/Center)
@@ -389,7 +404,7 @@ namespace CARE.Core
             // Register with DialogueManager
             if (DialogueManager.Instance != null)
             {
-                DialogueManager.Instance.SetupUI(panel, speakerText, bodyText, portraitImg, continueBtn, continueIndicator.gameObject);
+                DialogueManager.Instance.SetupUI(panel, speakerText, bodyText, portraitImg, continueBtn, continueIndicator.gameObject, bgImg);
             }
 
             panel.SetActive(false);
@@ -400,14 +415,15 @@ namespace CARE.Core
         {
             GameObject panel = CreateFullScreenPanel("LobbyRestorasiPanel", parent, new Color(0.08f, 0.16f, 0.11f, 1f));
 
-            // Background
+            // Background: Posko Restorasi & Klinik Hewan dari Figma
             Image bgImg = panel.GetComponent<Image>();
-            Sprite forestBg = Resources.Load<Sprite>("Environtment/image 2614");
-            if (forestBg != null) { bgImg.sprite = forestBg; bgImg.color = new Color(0.35f, 0.35f, 0.35f, 1f); }
+            Sprite clinicBg = Resources.Load<Sprite>("Environtment/restoration_clinic");
+            if (clinicBg == null) clinicBg = Resources.Load<Sprite>("Environtment/image 2614");
+            if (clinicBg != null) { bgImg.sprite = clinicBg; bgImg.color = Color.white; }
 
             // Header
             CreateUIText("LobbyTitle", panel.transform, "LOBBY RESTORASI EKOSISTEM", 40, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 420), new Vector2(1200, 50));
-            CreateUIText("LobbySubtitle", panel.transform, "Pusat Konservasi, Evakuasi, dan Rehabilitasi Satwa Liar", 20, new Color(0.85f, 0.95f, 0.85f), FontStyle.Normal, new Vector2(0, 375), new Vector2(1200, 35));
+            CreateUIText("LobbySubtitle", panel.transform, "Posko Evakuasi, Klinik Perawatan, dan Konservasi Satwa Liar", 20, new Color(0.85f, 0.95f, 0.85f), FontStyle.Normal, new Vector2(0, 375), new Vector2(1200, 35));
 
             lobbyProgressText = CreateUIText("ProgressText", panel.transform, "Satwa Terselamatkan: 0 / 3", 24, new Color(0.4f, 0.95f, 0.5f), FontStyle.Bold, new Vector2(0, 335), new Vector2(600, 35));
 
@@ -656,6 +672,9 @@ namespace CARE.Core
         private GameObject BuildBossPanel(Transform parent)
         {
             GameObject panel = CreateFullScreenPanel("BossFightPanel", parent, new Color(0.18f, 0.08f, 0.08f, 1f));
+            Image bgImg = panel.GetComponent<Image>();
+            Sprite bossBg = Resources.Load<Sprite>("Environtment/scene_sawit_man");
+            if (bossBg != null) { bgImg.sprite = bossBg; bgImg.color = Color.white; }
 
             CreateUIText("BossTitle", panel.transform, "KONFRONTASI: DOCTOR SAWIT MAN", 46, new Color(0.95f, 0.3f, 0.3f), FontStyle.Bold, new Vector2(0, 440), new Vector2(1200, 60));
 
@@ -694,6 +713,9 @@ namespace CARE.Core
         private GameObject BuildEndingPanel(Transform parent)
         {
             GameObject panel = CreateFullScreenPanel("EndingPanel", parent, new Color(0.06f, 0.15f, 0.1f, 1f));
+            Image bgImg = panel.GetComponent<Image>();
+            Sprite victoryBg = Resources.Load<Sprite>("Environtment/scene_victory");
+            if (victoryBg != null) { bgImg.sprite = victoryBg; bgImg.color = Color.white; }
 
             CreateUIText("VictoryTitle", panel.transform, "MISI SELESAI!", 60, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 380), new Vector2(1000, 80));
             CreateUIText("VictorySubtitle", panel.transform, "EKOSISTEM NUSANTARA BERHASIL DISELAMATKAN", 28, Color.white, FontStyle.Bold, new Vector2(0, 310), new Vector2(1200, 50));

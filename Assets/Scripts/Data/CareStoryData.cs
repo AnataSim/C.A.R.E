@@ -10,15 +10,17 @@ namespace CARE.Story
         public string speaker;     // "NARATOR", "PENJELAJAH", "DOCTOR SAWIT MAN", "UI / PETUNJUK"
         [TextArea(2, 5)]
         public string text;
-        public string portraitKey; // "penjelajah", "sawit_man", "none"
+        public string portraitKey; // "penjelajah", "sawit_man", "monyet", "none"
         public string sfxCue;
+        public string backgroundKey; // path to Resources sprite background for this line/scene
 
-        public DialogueLine(string speaker, string text, string portraitKey = "none", string sfxCue = "")
+        public DialogueLine(string speaker, string text, string portraitKey = "none", string sfxCue = "", string backgroundKey = "")
         {
             this.speaker = speaker;
             this.text = text;
             this.portraitKey = portraitKey;
             this.sfxCue = sfxCue;
+            this.backgroundKey = backgroundKey;
         }
     }
 
@@ -68,112 +70,112 @@ namespace CARE.Story
         // ----------------- OPENING STORY SCENES -----------------
         public static List<DialogueLine> Scene01_HutanTerbakar = new List<DialogueLine>()
         {
-            new DialogueLine("NARATOR", "Hutan tropis menjadi tempat hidup bagi berbagai jenis tumbuhan dan satwa. Setiap bagian ekosistem memiliki peran dalam menjaga keseimbangannya."),
-            new DialogueLine("NARATOR", "Namun, sebagian kawasan hutan kini mengalami kerusakan akibat pembukaan lahan yang tidak bertanggung jawab dan kebakaran."),
-            new DialogueLine("NARATOR", "Api dan asap mengubah keadaan hutan. Tempat mencari makan, berlindung, dan berkembang biak bagi satwa ikut terancam.")
+            new DialogueLine("NARATOR", "Hutan tropis menjadi tempat hidup bagi berbagai jenis tumbuhan dan satwa. Setiap bagian ekosistem memiliki peran dalam menjaga keseimbangannya.", "none", "fire", "Environtment/image 2614"),
+            new DialogueLine("NARATOR", "Namun, sebagian kawasan hutan kini mengalami kerusakan akibat pembukaan lahan yang tidak bertanggung jawab dan kebakaran.", "none", "", "Environtment/image 2614"),
+            new DialogueLine("NARATOR", "Api dan asap mengubah keadaan hutan. Tempat mencari makan, berlindung, dan berkembang biak bagi satwa ikut terancam.", "none", "", "Environtment/image 2614")
         };
 
         public static List<DialogueLine> Scene02_SatwaTerdampak = new List<DialogueLine>()
         {
-            new DialogueLine("NARATOR", "Satwa liar tidak selalu dapat berpindah dengan mudah ketika habitatnya terganggu."),
-            new DialogueLine("NARATOR", "Sebagian kehilangan tempat berlindung dan sumber makanan. Sebagian lainnya terpaksa menjauh dari wilayah tempat mereka hidup."),
-            new DialogueLine("NARATOR", "Di antara keadaan tersebut, masih ada satwa yang membutuhkan pertolongan.")
+            new DialogueLine("NARATOR", "Satwa liar tidak selalu dapat berpindah dengan mudah ketika habitatnya terganggu.", "none", "", "Environtment/image 2614"),
+            new DialogueLine("NARATOR", "Sebagian kehilangan tempat berlindung dan sumber makanan. Sebagian lainnya terpaksa menjauh dari wilayah tempat mereka hidup.", "none", "", "Environtment/image 2614"),
+            new DialogueLine("NARATOR", "Di antara keadaan tersebut, masih ada satwa yang membutuhkan pertolongan.", "none", "", "Environtment/image 2614")
         };
 
         public static List<DialogueLine> Scene03_PenjelajahTiba = new List<DialogueLine>()
         {
-            new DialogueLine("NARATOR", "Seorang penjelajah tiba di kawasan tersebut setelah mengetahui bahwa hutan mengalami kebakaran."),
-            new DialogueLine("PENJELAJAH", "Kondisi hutan ini lebih parah dari yang kubayangkan. Aku harus memeriksa keadaan di sekitar.", "penjelajah"),
-            new DialogueLine("PENJELAJAH", "Pertama, aku perlu memastikan apakah masih ada satwa yang membutuhkan bantuan.", "penjelajah")
+            new DialogueLine("NARATOR", "Seorang penjelajah tiba di kawasan tersebut setelah mengetahui bahwa hutan mengalami kebakaran.", "none", "", "Environtment/image 2614"),
+            new DialogueLine("PENJELAJAH", "Kondisi hutan ini lebih parah dari yang kubayangkan. Aku harus memeriksa keadaan di sekitar.", "penjelajah", "", "Environtment/image 2614"),
+            new DialogueLine("PENJELAJAH", "Pertama, aku perlu memastikan apakah masih ada satwa yang membutuhkan bantuan.", "penjelajah", "", "Environtment/image 2614")
         };
 
         public static List<DialogueLine> Scene04_SatwaTerluka = new List<DialogueLine>()
         {
-            new DialogueLine("NARATOR", "Di dekat pepohonan yang rusak, penjelajah menemukan seekor satwa yang masih berada di lokasi."),
-            new DialogueLine("PENJELAJAH", "Tenang. Aku tidak akan menyakitimu. Aku akan mencari cara agar kamu bisa dibawa ke tempat yang lebih aman.", "penjelajah"),
-            new DialogueLine("NARATOR", "Sebelum melanjutkan perjalanan, penjelajah memastikan satwa tersebut mendapat pertolongan yang diperlukan.")
+            new DialogueLine("NARATOR", "Di dekat pepohonan yang rusak, penjelajah menemukan seekor satwa yang masih berada di lokasi.", "none", "", "Environtment/scene_wounded_animal"),
+            new DialogueLine("PENJELAJAH", "Tenang. Aku tidak akan menyakitimu. Aku akan mencari cara agar kamu bisa dibawa ke tempat yang lebih aman.", "penjelajah", "", "Environtment/scene_wounded_animal"),
+            new DialogueLine("NARATOR", "Sebelum melanjutkan perjalanan, penjelajah memastikan satwa tersebut mendapat pertolongan yang diperlukan.", "monyet", "", "Environtment/scene_wounded_animal")
         };
 
         public static List<DialogueLine> Scene05_MisiDimulai = new List<DialogueLine>()
         {
-            new DialogueLine("PENJELAJAH", "Kamu sudah berada di tempat yang lebih aman. Setelah ini, aku akan mencari tahu apa yang menyebabkan kerusakan di kawasan ini.", "penjelajah"),
-            new DialogueLine("NARATOR", "Penjelajah memutuskan untuk membantu satwa yang terdampak sekaligus menelusuri petunjuk di sekitar hutan."),
-            new DialogueLine("NARATOR", "Perjalanan pemulihan dimulai dari satu lokasi. Setiap petunjuk akan membantu mengungkap keadaan yang sebenarnya.")
+            new DialogueLine("PENJELAJAH", "Kamu sudah berada di tempat yang lebih aman. Setelah ini, aku akan mencari tahu apa yang menyebabkan kerusakan di kawasan ini.", "penjelajah", "nature", "Environtment/restoration_clinic"),
+            new DialogueLine("NARATOR", "Penjelajah memutuskan untuk membantu satwa yang terdampak sekaligus menelusuri petunjuk di sekitar hutan.", "none", "", "Environtment/restoration_clinic"),
+            new DialogueLine("NARATOR", "Perjalanan pemulihan dimulai dari satu lokasi. Setiap petunjuk akan membantu mengungkap keadaan yang sebenarnya.", "none", "", "Environtment/restoration_clinic")
         };
 
         // ----------------- LOBBY RESTORASI -----------------
         public static List<DialogueLine> LobbyRestorasiIntro = new List<DialogueLine>()
         {
-            new DialogueLine("NARATOR", "Setelah meninggalkan lokasi kebakaran, penjelajah tiba di habitat restorasi."),
-            new DialogueLine("NARATOR", "Tempat ini akan menjadi rumah yang lebih aman bagi satwa yang berhasil diselamatkan."),
-            new DialogueLine("NARATOR", "Beberapa satwa masih belum terbuka. Selesaikan misi pada setiap Stage untuk memperoleh reward dan membuka satwa baru."),
-            new DialogueLine("UI / PETUNJUK", "Pilih satwa yang sudah terbuka untuk melihat informasi. Tekan PLAY untuk memulai misi berikutnya.")
+            new DialogueLine("NARATOR", "Setelah meninggalkan lokasi kebakaran, penjelajah tiba di posko habitat restorasi.", "none", "nature", "Environtment/restoration_clinic"),
+            new DialogueLine("NARATOR", "Tempat ini akan menjadi klinik dan rumah aman bagi satwa yang berhasil diselamatkan.", "none", "", "Environtment/restoration_clinic"),
+            new DialogueLine("NARATOR", "Beberapa satwa masih belum terbuka. Selesaikan misi pada setiap Stage untuk memperoleh reward dan membuka satwa baru.", "none", "", "Environtment/restoration_clinic"),
+            new DialogueLine("UI / PETUNJUK", "Pilih satwa yang sudah terbuka untuk melihat informasi. Tekan PLAY untuk memulai misi berikutnya.", "none", "", "Environtment/restoration_clinic")
         };
 
         // ----------------- BOSS DIALOGUES (STAGE 1-3) -----------------
         public static List<DialogueLine> BossStage1_Intro = new List<DialogueLine>()
         {
-            new DialogueLine("NARATOR", "Setelah mengumpulkan petunjuk dari dua lokasi, penjelajah menemukan seseorang yang tampaknya mengetahui lebih banyak tentang perubahan kawasan ini."),
-            new DialogueLine("DOCTOR SAWIT MAN", "Kalian sudah mengumpulkan cukup banyak catatan. Seharusnya kalian berhenti sampai di sini.", "sawit_man"),
-            new DialogueLine("PENJELAJAH", "Kami menemukan perubahan pada kawasan hutan dan dampaknya terhadap satwa. Kami ingin tahu siapa yang bertanggung jawab.", "penjelajah"),
-            new DialogueLine("DOCTOR SAWIT MAN", "Kalian hanya melihat sebagian kecil dari persoalan ini. Kalian tidak tahu apa yang sedang kalian hadapi.", "sawit_man"),
-            new DialogueLine("PENJELAJAH", "Kerusakan habitat tidak bisa dianggap sebagai hal biasa. Kami akan memastikan petunjuk ini diperiksa.", "penjelajah"),
-            new DialogueLine("UI / PETUNJUK", "HADAPI DOCTOR SAWIT MAN. Selesaikan tantangan boss untuk melanjutkan misi.")
+            new DialogueLine("NARATOR", "Setelah mengumpulkan petunjuk dari dua lokasi, penjelajah menemukan seseorang yang tampaknya mengetahui lebih banyak tentang perubahan kawasan ini.", "none", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("DOCTOR SAWIT MAN", "Kalian sudah mengumpulkan cukup banyak catatan. Seharusnya kalian berhenti sampai di sini.", "sawit_man", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("PENJELAJAH", "Kami menemukan perubahan pada kawasan hutan dan dampaknya terhadap satwa. Kami ingin tahu siapa yang bertanggung jawab.", "penjelajah", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("DOCTOR SAWIT MAN", "Kalian hanya melihat sebagian kecil dari persoalan ini. Kalian tidak tahu apa yang sedang kalian hadapi.", "sawit_man", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("PENJELAJAH", "Kerusakan habitat tidak bisa dianggap sebagai hal biasa. Kami akan memastikan petunjuk ini diperiksa.", "penjelajah", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("UI / PETUNJUK", "HADAPI DOCTOR SAWIT MAN. Selesaikan tantangan boss untuk melanjutkan misi.", "none", "", "Environtment/scene_sawit_man")
         };
 
         public static List<DialogueLine> BossStage1_Defeat = new List<DialogueLine>()
         {
-            new DialogueLine("DOCTOR SAWIT MAN", "Kalian belum memahami seluruh ceritanya. Ini belum berakhir.", "sawit_man"),
-            new DialogueLine("PENJELAJAH", "Kami akan terus menelusuri petunjuk yang ada.", "penjelajah"),
-            new DialogueLine("NARATOR", "Doctor Sawit Man mundur. Petunjuk yang terkumpul membuka jalan untuk melanjutkan investigasi.")
+            new DialogueLine("DOCTOR SAWIT MAN", "Kalian belum memahami seluruh ceritanya. Ini belum berakhir.", "sawit_man", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("PENJELAJAH", "Kami akan terus menelusuri petunjuk yang ada.", "penjelajah", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("NARATOR", "Doctor Sawit Man mundur. Petunjuk yang terkumpul membuka jalan untuk melanjutkan investigasi.", "none", "", "Environtment/scene_sawit_man")
         };
 
         public static List<DialogueLine> BossStage2_Intro = new List<DialogueLine>()
         {
-            new DialogueLine("NARATOR", "Catatan dan dokumentasi dari Stage sebelumnya membantu penjelajah menelusuri lokasi berikutnya."),
-            new DialogueLine("DOCTOR SAWIT MAN", "Kalian masih mengikuti jejak itu? Aku sudah memperingatkan kalian untuk berhenti.", "sawit_man"),
-            new DialogueLine("PENJELAJAH", "Petunjuk dari lokasi berbeda saling berkaitan. Kami tidak akan mengabaikan kerusakan yang terjadi.", "penjelajah"),
-            new DialogueLine("DOCTOR SAWIT MAN", "Satu kawasan yang rusak bukan berarti kalian memahami seluruh persoalannya.", "sawit_man"),
-            new DialogueLine("PENJELAJAH", "Justru karena itu kami mengumpulkan informasi dari beberapa tempat. Semua petunjuk harus diperiksa.", "penjelajah"),
-            new DialogueLine("UI / PETUNJUK", "DOCTOR SAWIT MAN KEMBALI MENGHADANG. Selesaikan tantangan boss.")
+            new DialogueLine("NARATOR", "Catatan dan dokumentasi dari Stage sebelumnya membantu penjelajah menelusuri lokasi berikutnya.", "none", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("DOCTOR SAWIT MAN", "Kalian masih mengikuti jejak itu? Aku sudah memperingatkan kalian untuk berhenti.", "sawit_man", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("PENJELAJAH", "Petunjuk dari lokasi berbeda saling berkaitan. Kami tidak akan mengabaikan kerusakan yang terjadi.", "penjelajah", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("DOCTOR SAWIT MAN", "Satu kawasan yang rusak bukan berarti kalian memahami seluruh persoalannya.", "sawit_man", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("PENJELAJAH", "Justru karena itu kami mengumpulkan informasi dari beberapa tempat. Semua petunjuk harus diperiksa.", "penjelajah", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("UI / PETUNJUK", "DOCTOR SAWIT MAN KEMBALI MENGHADANG. Selesaikan tantangan boss.", "none", "", "Environtment/scene_sawit_man")
         };
 
         public static List<DialogueLine> BossStage2_Defeat = new List<DialogueLine>()
         {
-            new DialogueLine("DOCTOR SAWIT MAN", "Kalian semakin dekat, tetapi masih ada satu bagian yang belum kalian lihat.", "sawit_man"),
-            new DialogueLine("PENJELAJAH", "Kalau begitu, kami akan mencari bagian yang belum ditemukan itu.", "penjelajah"),
-            new DialogueLine("NARATOR", "Doctor Sawit Man kembali mundur. Petunjuk yang diperoleh mengarah pada area pemulihan hutan.")
+            new DialogueLine("DOCTOR SAWIT MAN", "Kalian semakin dekat, tetapi masih ada satu bagian yang belum kalian lihat.", "sawit_man", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("PENJELAJAH", "Kalau begitu, kami akan mencari bagian yang belum ditemukan itu.", "penjelajah", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("NARATOR", "Doctor Sawit Man kembali mundur. Petunjuk yang diperoleh mengarah pada area pemulihan hutan.", "none", "", "Environtment/scene_sawit_man")
         };
 
         public static List<DialogueLine> BossStage3_Intro = new List<DialogueLine>()
         {
-            new DialogueLine("NARATOR", "Dari seluruh petunjuk yang dikumpulkan, penjelajah akhirnya menemukan hubungan antara keputusan pembukaan lahan dan kerusakan yang terjadi di kawasan hutan."),
-            new DialogueLine("DOCTOR SAWIT MAN", "Kalian berhasil sampai sejauh ini. Apa lagi yang ingin kalian buktikan?", "sawit_man"),
-            new DialogueLine("PENJELAJAH", "Petunjuk dari beberapa lokasi menunjukkan pola yang sama. Kami tidak akan membiarkan kerusakan ini diabaikan.", "penjelajah"),
-            new DialogueLine("DOCTOR SAWIT MAN", "Aku mengira pembukaan lahan akan memberi keuntungan tanpa menimbulkan akibat sebesar ini.", "sawit_man"),
-            new DialogueLine("PENJELAJAH", "Keputusan yang tidak bertanggung jawab berdampak pada hutan dan kehidupan satwa. Dampaknya tidak bisa dihapus begitu saja.", "penjelajah"),
-            new DialogueLine("DOCTOR SAWIT MAN", "Aku tidak bisa menyangkal catatan dan dokumentasi yang kalian temukan.", "sawit_man"),
-            new DialogueLine("UI / PETUNJUK", "PERTARUNGAN TERAKHIR. Selesaikan tantangan untuk mengakhiri konflik.")
+            new DialogueLine("NARATOR", "Dari seluruh petunjuk yang dikumpulkan, penjelajah akhirnya menemukan hubungan antara keputusan pembukaan lahan dan kerusakan yang terjadi di kawasan hutan.", "none", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("DOCTOR SAWIT MAN", "Kalian berhasil sampai sejauh ini. Apa lagi yang ingin kalian buktikan?", "sawit_man", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("PENJELAJAH", "Petunjuk dari beberapa lokasi menunjukkan pola yang sama. Kami tidak akan membiarkan kerusakan ini diabaikan.", "penjelajah", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("DOCTOR SAWIT MAN", "Aku mengira pembukaan lahan akan memberi keuntungan tanpa menimbulkan akibat sebesar ini.", "sawit_man", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("PENJELAJAH", "Keputusan yang tidak bertanggung jawab berdampak pada hutan dan kehidupan satwa. Dampaknya tidak bisa dihapus begitu saja.", "penjelajah", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("DOCTOR SAWIT MAN", "Aku tidak bisa menyangkal catatan dan dokumentasi yang kalian temukan.", "sawit_man", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("UI / PETUNJUK", "PERTARUNGAN TERAKHIR. Selesaikan tantangan untuk mengakhiri konflik.", "none", "", "Environtment/scene_sawit_man")
         };
 
         public static List<DialogueLine> BossStage3_Defeat = new List<DialogueLine>()
         {
-            new DialogueLine("DOCTOR SAWIT MAN", "Aku mengakui bahwa tindakanku telah menyebabkan kerusakan. Aku harus bertanggung jawab atas keputusan itu.", "sawit_man"),
-            new DialogueLine("PENJELAJAH", "Mengakui kesalahan adalah langkah awal. Pemulihan hutan membutuhkan tindakan nyata dan pengawasan.", "penjelajah"),
-            new DialogueLine("DOCTOR SAWIT MAN", "Aku bersedia menyerahkan informasi yang kuberikan dan mendukung proses pemulihan sesuai aturan yang berlaku.", "sawit_man"),
-            new DialogueLine("NARATOR", "Konfrontasi berakhir. Namun, pekerjaan untuk memulihkan hutan dan melindungi satwa masih harus dilanjutkan.")
+            new DialogueLine("DOCTOR SAWIT MAN", "Aku mengakui bahwa tindakanku telah menyebabkan kerusakan. Aku harus bertanggung jawab atas keputusan itu.", "sawit_man", "", "Environtment/scene_victory"),
+            new DialogueLine("PENJELAJAH", "Mengakui kesalahan adalah langkah awal. Pemulihan hutan membutuhkan tindakan nyata dan pengawasan.", "penjelajah", "", "Environtment/scene_victory"),
+            new DialogueLine("DOCTOR SAWIT MAN", "Aku bersedia menyerahkan informasi yang kuberikan dan mendukung proses pemulihan sesuai aturan yang berlaku.", "sawit_man", "", "Environtment/scene_victory"),
+            new DialogueLine("NARATOR", "Konfrontasi berakhir. Namun, pekerjaan untuk memulihkan hutan dan melindungi satwa masih harus dilanjutkan.", "none", "", "Environtment/scene_victory")
         };
 
         // ----------------- ENDING SCENES -----------------
         public static List<DialogueLine> Ending_Scene = new List<DialogueLine>()
         {
-            new DialogueLine("NARATOR", "Setelah rangkaian misi selesai, satwa yang berhasil diselamatkan mendapat tempat yang lebih aman."),
-            new DialogueLine("NARATOR", "Pemulihan hutan membutuhkan waktu. Pepohonan, sumber air, dan tempat berlindung perlu dijaga agar ekosistem dapat kembali berfungsi."),
-            new DialogueLine("PENJELAJAH", "Kita sudah membantu beberapa satwa. Tetapi menjaga hutan tidak berhenti setelah satu misi selesai.", "penjelajah"),
-            new DialogueLine("NARATOR", "Hutan bukan sekadar kumpulan pepohonan. Hutan adalah rumah bagi berbagai kehidupan."),
-            new DialogueLine("NARATOR", "Melindungi hutan berarti menjaga habitat, sumber makanan, dan keseimbangan ekosistem."),
-            new DialogueLine("PENJELAJAH", "Setiap tindakan untuk menjaga lingkungan memiliki arti. Mulailah dengan peduli dan bertanggung jawab.", "penjelajah"),
-            new DialogueLine("UI / PETUNJUK", "C.A.R.E — CEGAH. API. RAWAT. EKOSISTEM. Terima kasih telah membantu menjaga hutan dan satwa.")
+            new DialogueLine("NARATOR", "Setelah rangkaian misi selesai, satwa yang berhasil diselamatkan mendapat tempat yang lebih aman.", "none", "", "Environtment/scene_victory"),
+            new DialogueLine("NARATOR", "Pemulihan hutan membutuhkan waktu. Pepohonan, sumber air, dan tempat berlindung perlu dijaga agar ekosistem dapat kembali berfungsi.", "none", "", "Environtment/scene_victory"),
+            new DialogueLine("PENJELAJAH", "Kita sudah membantu beberapa satwa. Tetapi menjaga hutan tidak berhenti setelah satu misi selesai.", "penjelajah", "", "Environtment/scene_victory"),
+            new DialogueLine("NARATOR", "Hutan bukan sekadar kumpulan pepohonan. Hutan adalah rumah bagi berbagai kehidupan.", "none", "", "Environtment/scene_victory"),
+            new DialogueLine("NARATOR", "Melindungi hutan berarti menjaga habitat, sumber makanan, dan keseimbangan ekosistem.", "none", "", "Environtment/scene_victory"),
+            new DialogueLine("PENJELAJAH", "Setiap tindakan untuk menjaga lingkungan memiliki arti. Mulailah dengan peduli dan bertanggung jawab.", "penjelajah", "nature", "Environtment/scene_victory"),
+            new DialogueLine("UI / PETUNJUK", "C.A.R.E — CEGAH. API. RAWAT. EKOSISTEM. Terima kasih telah membantu menjaga hutan dan satwa.", "none", "", "Environtment/scene_victory")
         };
 
         // ----------------- HIDDEN OBJECT ITEMS & POPUP NOTES -----------------
