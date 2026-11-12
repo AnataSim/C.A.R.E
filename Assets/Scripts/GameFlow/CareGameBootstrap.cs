@@ -277,14 +277,16 @@ namespace CARE.Core
 
         private void WireExistingTitlePanel(Transform panel)
         {
-            // 1. Nonaktifkan Image ganda pada MainPanel agar tidak menumpuk background ganda
+            // 1. Format background MainPanel dengan warna langit merah bencana alam agar tidak ada celah transparan
             Image mainPanelImg = panel.GetComponent<Image>();
             if (mainPanelImg != null)
             {
-                mainPanelImg.enabled = false;
+                mainPanelImg.sprite = null;
+                mainPanelImg.color = new Color(0.35f, 0.12f, 0.07f, 1f); // Reddish-maroon wildfire sky
+                mainPanelImg.enabled = true;
             }
 
-            // 2. Format Environment (Latar belakang hutan terbakar) agar mengisi layar penuh secara rapi
+            // 2. Format Environment (Latar belakang hutan & asap kebakaran) menggunakan background bersih tanpa logo ganda
             Transform env = panel.Find("Environment");
             if (env != null)
             {
@@ -302,6 +304,8 @@ namespace CARE.Core
                 {
                     envImg.preserveAspect = false;
                     envImg.color = Color.white;
+                    Sprite cleanBg = Resources.Load<Sprite>("Environtment/title_screen_bg");
+                    if (cleanBg != null) envImg.sprite = cleanBg;
                 }
             }
 
@@ -309,6 +313,7 @@ namespace CARE.Core
             Transform groupBtn = panel.Find("Button_Group");
             if (groupBtn != null)
             {
+                groupBtn.SetAsLastSibling();
                 RectTransform grpRT = groupBtn.GetComponent<RectTransform>();
                 if (grpRT != null)
                 {
@@ -338,6 +343,7 @@ namespace CARE.Core
             Transform playBtn = panel.Find("Button_Play");
             if (playBtn != null)
             {
+                playBtn.SetAsLastSibling();
                 RectTransform playRT = playBtn.GetComponent<RectTransform>();
                 if (playRT != null)
                 {
@@ -367,17 +373,21 @@ namespace CARE.Core
             Transform existingLobbyBtn = panel.Find("BtnNavLobby");
             if (existingLobbyBtn == null)
             {
-                GameObject lbObj = CreateUIButton("BtnNavLobby", panel, "🐾 LOBBY RESTORASI", new Vector2(0, 0), new Vector2(360, 65), new Color(0.18f, 0.65f, 0.32f), () =>
+                Button lbBtn = CreateUIButton("BtnNavLobby", panel, "🐾 LOBBY RESTORASI", new Vector2(0, 0), new Vector2(360, 65), new Color(0.18f, 0.65f, 0.32f), () =>
                 {
                     Debug.Log("[C.A.R.E.] Tombol Lobby Restorasi diklik!");
                     if (CareAudioManager.Instance != null) CareAudioManager.Instance.PlayTransitionSFX();
                     if (GameFlowManager.Instance != null) GameFlowManager.Instance.ShowLobbyRestorasi();
                 });
-                RectTransform lbRT = lbObj.GetComponent<RectTransform>();
+                RectTransform lbRT = lbBtn.GetComponent<RectTransform>();
                 lbRT.anchorMin = new Vector2(0.5f, 0.23f);
                 lbRT.anchorMax = new Vector2(0.5f, 0.23f);
                 lbRT.pivot = new Vector2(0.5f, 0.5f);
                 lbRT.anchoredPosition = Vector2.zero;
+            }
+            else
+            {
+                existingLobbyBtn.SetAsLastSibling();
             }
         }
 
