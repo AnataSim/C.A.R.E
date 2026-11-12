@@ -40,6 +40,12 @@ namespace CARE.Core
         private Image gajahCardImage;
         private Text gajahCardStatus;
 
+        // Boss fight dynamic UI
+        private Text bossQuoteText;
+        private Button bossEvidenceBtn1;
+        private Button bossEvidenceBtn2;
+        private Image bossArtImage;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void AutoInitializeGame()
         {
@@ -760,8 +766,9 @@ namespace CARE.Core
             Image bgImg = panel.GetComponent<Image>();
             Sprite bossBg = Resources.Load<Sprite>("Environtment/scene_sawit_man");
             if (bossBg != null) { bgImg.sprite = bossBg; bgImg.color = Color.white; }
+            bgImg.raycastTarget = false;
 
-            CreateUIText("BossTitle", panel.transform, "KONFRONTASI: DOCTOR SAWIT MAN", 46, new Color(0.95f, 0.3f, 0.3f), FontStyle.Bold, new Vector2(0, 440), new Vector2(1200, 60));
+            CreateUIText("BossTitle", panel.transform, "KONFRONTASI: DOCTOR SAWIT MAN", 44, new Color(0.95f, 0.3f, 0.3f), FontStyle.Bold, new Vector2(0, 440), new Vector2(1200, 60));
 
             // Doctor Sawit Man Character Artwork
             GameObject bossArtObj = new GameObject("BossArt");
@@ -769,9 +776,10 @@ namespace CARE.Core
             RectTransform artRT = bossArtObj.AddComponent<RectTransform>();
             artRT.sizeDelta = new Vector2(480, 600);
             artRT.anchoredPosition = new Vector2(0, 70);
-            Image bossImg = bossArtObj.AddComponent<Image>();
-            bossImg.sprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man");
-            bossImg.preserveAspect = true;
+            bossArtImage = bossArtObj.AddComponent<Image>();
+            bossArtImage.sprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man");
+            bossArtImage.preserveAspect = true;
+            bossArtImage.raycastTarget = false;
 
             // Confrontation Dialogue Box
             GameObject cardObj = CreateUIBox("BossBox", panel.transform, new Color(0.1f, 0.05f, 0.05f, 0.95f));
@@ -779,20 +787,94 @@ namespace CARE.Core
             cardRT.sizeDelta = new Vector2(1200, 240);
             cardRT.anchoredPosition = new Vector2(0, -320);
 
-            CreateUIText("BossQuote", cardObj.transform, "\"Hutan ini hanya lahan kosong! Industri kami adalah masa depan kemajuan!\"", 24, Color.white, FontStyle.Italic, new Vector2(0, 40), new Vector2(1100, 80));
+            bossQuoteText = CreateUIText("BossQuote", cardObj.transform, "\"Hutan ini hanya lahan kosong! Industri kami adalah masa depan kemajuan!\"", 24, Color.white, FontStyle.Italic, new Vector2(0, 40), new Vector2(1100, 80));
 
-            CreateUIButton("BtnEvidence1", cardObj.transform, "⚖️ Sodorkan Sampel Tanah & Drum Forensik!", new Vector2(-280, -45), new Vector2(500, 60), new Color(0.75f, 0.25f, 0.25f), () =>
+            bossEvidenceBtn1 = CreateUIButton("BtnEvidence1", cardObj.transform, "⚖️ Sodorkan Sampel Tanah & Drum Forensik!", new Vector2(-280, -45), new Vector2(520, 65), new Color(0.75f, 0.22f, 0.22f), () =>
             {
-                if (DialogueManager.Instance != null) DialogueManager.Instance.OnContinuePressed();
+                if (GameFlowManager.Instance != null) GameFlowManager.Instance.SubmitBossEvidence(1);
             });
 
-            CreateUIButton("BtnEvidence2", cardObj.transform, "📜 Paparkan Data Kepunahan Satwa & Karbon!", new Vector2(280, -45), new Vector2(500, 60), new Color(0.2f, 0.5f, 0.65f), () =>
+            bossEvidenceBtn2 = CreateUIButton("BtnEvidence2", cardObj.transform, "📜 Paparkan Data Kepunahan Satwa & Karbon!", new Vector2(280, -45), new Vector2(520, 65), new Color(0.18f, 0.45f, 0.65f), () =>
             {
-                if (DialogueManager.Instance != null) DialogueManager.Instance.OnContinuePressed();
+                if (GameFlowManager.Instance != null) GameFlowManager.Instance.SubmitBossEvidence(2);
             });
 
             panel.SetActive(false);
             return panel;
+        }
+
+        public void SetupBossFight(int stage)
+        {
+            if (bossPanel == null) return;
+            bossPanel.SetActive(true);
+
+            if (bossArtImage != null)
+            {
+                bossArtImage.color = Color.white;
+            }
+
+            if (bossQuoteText != null)
+            {
+                if (stage == 1)
+                {
+                    bossQuoteText.text = "\"Kalian sudah mengumpulkan cukup banyak catatan. Hutan ini hanya lahan kosong untuk kemajuan industri kami!\"";
+                }
+                else if (stage == 2)
+                {
+                    bossQuoteText.text = "\"Kalian masih mengikuti jejak itu? Satu kawasan rusak bukan berarti kalian bisa menghentikan rencana kami!\"";
+                }
+                else
+                {
+                    bossQuoteText.text = "\"Kalian berhasil sampai sejauh ini... Tapi kalian tidak tahu kekuatan apa yang kalian hadapi di perkebunan ini!\"";
+                }
+            }
+
+            if (bossEvidenceBtn1 != null)
+            {
+                bossEvidenceBtn1.interactable = true;
+                bossEvidenceBtn1.gameObject.SetActive(true);
+            }
+            if (bossEvidenceBtn2 != null)
+            {
+                bossEvidenceBtn2.interactable = true;
+                bossEvidenceBtn2.gameObject.SetActive(true);
+            }
+        }
+
+        public void ShowBossDefeatedResponse(int stage, Action onComplete)
+        {
+            if (bossEvidenceBtn1 != null) bossEvidenceBtn1.interactable = false;
+            if (bossEvidenceBtn2 != null) bossEvidenceBtn2.interactable = false;
+
+            if (bossArtImage != null)
+            {
+                bossArtImage.color = new Color(0.85f, 0.7f, 0.7f, 1f);
+            }
+
+            if (bossQuoteText != null)
+            {
+                if (stage == 1)
+                {
+                    bossQuoteText.text = "💥 DOCTOR SAWIT MAN TERPOJOK!\n\"Kalian belum memahami seluruh ceritanya... Tapi bukti ini tidak bisa kusangkal!\"";
+                }
+                else if (stage == 2)
+                {
+                    bossQuoteText.text = "💥 BUKTI PERUSAKAN HAKIKI DIBONGKAR!\n\"Kalian semakin dekat... Aku harus mundur untuk saat ini!\"";
+                }
+                else
+                {
+                    bossQuoteText.text = "🏆 DOCTOR SAWIT MAN MENYERAH!\n\"Aku mengakui tindakanku telah menyebabkan kehancuran... Aku bersedia bertanggung jawab.\"";
+                }
+            }
+
+            StartCoroutine(BossDefeatDelayCoroutine(onComplete));
+        }
+
+        private System.Collections.IEnumerator BossDefeatDelayCoroutine(Action onComplete)
+        {
+            yield return new WaitForSeconds(2.0f);
+            if (bossPanel != null) bossPanel.SetActive(false);
+            onComplete?.Invoke();
         }
 
         private GameObject BuildEndingPanel(Transform parent)
@@ -929,6 +1011,7 @@ namespace CARE.Core
 
             Image img = obj.AddComponent<Image>();
             img.color = bgColor;
+            img.raycastTarget = false;
             return obj;
         }
 
@@ -947,6 +1030,7 @@ namespace CARE.Core
             txt.fontStyle = style;
             txt.color = color;
             txt.alignment = TextAnchor.MiddleCenter;
+            txt.raycastTarget = false;
             return txt;
         }
 
@@ -960,20 +1044,26 @@ namespace CARE.Core
 
             Image img = obj.AddComponent<Image>();
             img.color = bgColor;
+            img.raycastTarget = true;
 
             Button btn = obj.AddComponent<Button>();
+            btn.targetGraphic = img;
             ColorBlock cb = btn.colors;
             cb.normalColor = bgColor;
-            cb.highlightedColor = new Color(Mathf.Min(1f, bgColor.r * 1.25f), Mathf.Min(1f, bgColor.g * 1.25f), Mathf.Min(1f, bgColor.b * 1.25f), 1f);
-            cb.pressedColor = new Color(bgColor.r * 0.8f, bgColor.g * 0.8f, bgColor.b * 0.8f, 1f);
+            cb.highlightedColor = new Color(Mathf.Min(1f, bgColor.r * 1.35f), Mathf.Min(1f, bgColor.g * 1.35f), Mathf.Min(1f, bgColor.b * 1.35f), 1f);
+            cb.pressedColor = new Color(bgColor.r * 0.7f, bgColor.g * 0.7f, bgColor.b * 0.7f, 1f);
+            cb.selectedColor = bgColor;
+            cb.disabledColor = new Color(0.4f, 0.4f, 0.4f, 0.5f);
             btn.colors = cb;
 
-            Text txt = CreateUIText("Label", obj.transform, label, (int)(size.y * 0.42f), Color.white, FontStyle.Bold, Vector2.zero, size);
+            Text txt = CreateUIText("Label", obj.transform, label, (int)(size.y * 0.38f), Color.white, FontStyle.Bold, Vector2.zero, size);
+            txt.raycastTarget = false;
 
             if (onClick != null)
             {
                 btn.onClick.AddListener(() =>
                 {
+                    Debug.Log($"[C.A.R.E. UI] Tombol '{name}' berhasil diklik!");
                     if (CareAudioManager.Instance != null) CareAudioManager.Instance.PlayTransitionSFX();
                     onClick.Invoke();
                 });

@@ -211,46 +211,56 @@ namespace CARE.Core
         public void StartBossFight(int stage)
         {
             currentState = GameState.BossFight;
+            currentStage = stage;
             HideAllScreens();
-            if (bossFightPanel != null) bossFightPanel.SetActive(true);
 
             if (CareAudioManager.Instance != null)
             {
                 CareAudioManager.Instance.PlayBossBGM();
             }
 
-            List<DialogueLine> introDialogue = null;
-            List<DialogueLine> defeatDialogue = null;
-
-            if (stage == 1)
+            // Tampilkan UI Boss Fight interaktif
+            if (CareGameBootstrap.Instance != null)
             {
-                introDialogue = CareStoryDatabase.BossStage1_Intro;
-                defeatDialogue = CareStoryDatabase.BossStage1_Defeat;
+                CareGameBootstrap.Instance.SetupBossFight(stage);
             }
-            else if (stage == 2)
+            else if (bossFightPanel != null)
             {
-                introDialogue = CareStoryDatabase.BossStage2_Intro;
-                defeatDialogue = CareStoryDatabase.BossStage2_Defeat;
+                bossFightPanel.SetActive(true);
+            }
+        }
+
+        public void SubmitBossEvidence(int evidenceIndex)
+        {
+            Debug.Log($"[C.A.R.E.] Pemain menyodorkan bukti {evidenceIndex} ke Doctor Sawit Man pada Stage {currentStage}!");
+
+            if (CareAudioManager.Instance != null)
+            {
+                CareAudioManager.Instance.PlayItemFoundSFX();
+            }
+
+            List<DialogueLine> defeatDialogue = null;
+            if (currentStage == 1) defeatDialogue = CareStoryDatabase.BossStage1_Defeat;
+            else if (currentStage == 2) defeatDialogue = CareStoryDatabase.BossStage2_Defeat;
+            else defeatDialogue = CareStoryDatabase.BossStage3_Defeat;
+
+            if (CareGameBootstrap.Instance != null)
+            {
+                CareGameBootstrap.Instance.ShowBossDefeatedResponse(currentStage, () =>
+                {
+                    OnBossDefeated(currentStage, defeatDialogue);
+                });
             }
             else
             {
-                introDialogue = CareStoryDatabase.BossStage3_Intro;
-                defeatDialogue = CareStoryDatabase.BossStage3_Defeat;
-            }
-
-            // Dialog Pengenalan Boss
-            if (DialogueManager.Instance != null && introDialogue != null)
-            {
-                DialogueManager.Instance.StartDialogue(introDialogue, () =>
-                {
-                    // Boss Battle sequence: setelah menang
-                    OnBossDefeated(stage, defeatDialogue);
-                });
+                OnBossDefeated(currentStage, defeatDialogue);
             }
         }
 
         private void OnBossDefeated(int stage, List<DialogueLine> defeatDialogue)
         {
+            HideAllScreens();
+
             if (DialogueManager.Instance != null && defeatDialogue != null)
             {
                 DialogueManager.Instance.StartDialogue(defeatDialogue, () =>
@@ -265,9 +275,33 @@ namespace CARE.Core
                         return;
                     }
 
+                    // Perbarui status Lobby
+                    if (CareGameBootstrap.Instance != null)
+                    {
+                        CareGameBootstrap.Instance.UpdateLobbyUI();
+                    }
+
                     // Kembali ke Lobby
                     ShowLobbyRestorasi();
                 });
+            }
+            else
+            {
+                if (stage == 1) UnlockAnimal("rusa_timor");
+                else if (stage == 2) UnlockAnimal("orangutan");
+                else if (stage == 3)
+                {
+                    UnlockAnimal("gajah_asia");
+                    ShowEnding();
+                    return;
+                }
+
+                if (CareGameBootstrap.Instance != null)
+                {
+                    CareGameBootstrap.Instance.UpdateLobbyUI();
+                }
+
+                ShowLobbyRestorasi();
             }
         }
 
