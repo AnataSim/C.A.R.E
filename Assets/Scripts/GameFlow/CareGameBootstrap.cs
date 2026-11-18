@@ -76,6 +76,7 @@ namespace CARE.Core
             EnsureGameFlowManager();
             EnsureDialogueManager();
             EnsureEncyclopediaManager();
+            EnsureMatch3CombatManager();
             EnsureHiddenObjectManager();
 
             // Setup Canvas & UI Hierarchy
@@ -84,28 +85,7 @@ namespace CARE.Core
 
         private Font GetDefaultFont()
         {
-            Font font = null;
-            try
-            {
-                font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            }
-            catch {}
-
-            if (font == null)
-            {
-                try
-                {
-                    font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-                }
-                catch {}
-            }
-
-            if (font == null)
-            {
-                font = Font.CreateDynamicFontFromOSFont("Arial", 16);
-            }
-
-            return font;
+            return Match3CombatManager.GetGameFont();
         }
 
         private void Start()
@@ -204,6 +184,15 @@ namespace CARE.Core
             {
                 GameObject encObj = new GameObject("EncyclopediaManager");
                 encObj.AddComponent<EncyclopediaManager>();
+            }
+        }
+
+        private void EnsureMatch3CombatManager()
+        {
+            if (Match3CombatManager.Instance == null)
+            {
+                GameObject m3Obj = new GameObject("Match3CombatManager");
+                m3Obj.AddComponent<Match3CombatManager>();
             }
         }
 
@@ -665,94 +654,194 @@ namespace CARE.Core
 
         private GameObject BuildHiddenObjectPanel(Transform parent)
         {
-            GameObject panel = CreateFullScreenPanel("HiddenObjectPanel", parent, new Color(0.08f, 0.12f, 0.1f, 1f));
+            // Match-3 RPG Combat Panel (Ganti mekanik lama menjadi Match-3 Combat seperti Candy Crush & Dungeon Puzzles)
+            GameObject panel = CreateFullScreenPanel("Match3CombatPanel", parent, new Color(0.08f, 0.12f, 0.1f, 1f));
 
             // Background
             Image bgImg = panel.GetComponent<Image>();
             Sprite forestBg = Resources.Load<Sprite>("Environtment/image 2614");
-            if (forestBg != null) { bgImg.sprite = forestBg; bgImg.color = new Color(0.5f, 0.5f, 0.5f, 1f); }
+            if (forestBg != null) { bgImg.sprite = forestBg; bgImg.color = new Color(0.35f, 0.38f, 0.35f, 1f); }
 
-            // Top Header Bar
-            GameObject headerBar = CreateUIBox("HeaderBar", panel.transform, new Color(0.05f, 0.08f, 0.06f, 0.92f));
+            // 1. Top Header Bar
+            GameObject headerBar = CreateUIBox("HeaderBar", panel.transform, new Color(0.05f, 0.08f, 0.06f, 0.94f));
             RectTransform headerRT = headerBar.GetComponent<RectTransform>();
-            headerRT.anchorMin = new Vector2(0f, 0.9f);
+            headerRT.anchorMin = new Vector2(0f, 0.91f);
             headerRT.anchorMax = new Vector2(1f, 1f);
             headerRT.offsetMin = Vector2.zero;
             headerRT.offsetMax = Vector2.zero;
 
-            Text titleText = CreateUIText("LocationTitle", headerBar.transform, "AREA INVESTIGASI: TEPI HUTAN", 28, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(40, 0), new Vector2(900, 50));
+            Text titleText = CreateUIText("LocationTitle", headerBar.transform, "⚔️ AREA INVESTIGASI: TEPI HUTAN", 24, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(40, 0), new Vector2(650, 48));
             RectTransform ttRT = titleText.GetComponent<RectTransform>();
             ttRT.anchorMin = new Vector2(0f, 0.5f);
             ttRT.anchorMax = new Vector2(0f, 0.5f);
             ttRT.pivot = new Vector2(0f, 0.5f);
             titleText.alignment = TextAnchor.MiddleLeft;
 
-            CreateUIButton("BtnExitMission", headerBar.transform, "⬅️ Keluar Misi", new Vector2(-40, 0), new Vector2(220, 50), new Color(0.4f, 0.25f, 0.25f), () =>
+            Text movesText = CreateUIText("MovesText", headerBar.transform, "🎯 LANGKAH: 24", 22, Color.white, FontStyle.Bold, new Vector2(100, 0), new Vector2(220, 44));
+            Text scoreText = CreateUIText("ScoreText", headerBar.transform, "🌟 EXP: 0", 20, new Color(1f, 0.85f, 0.2f), FontStyle.Bold, new Vector2(330, 0), new Vector2(220, 44));
+
+            Button exitMissionBtn = CreateUIButton("BtnExitMission", headerBar.transform, "⬅️ Keluar Misi", new Vector2(-40, 0), new Vector2(200, 46), new Color(0.45f, 0.22f, 0.22f), () =>
             {
                 if (GameFlowManager.Instance != null) GameFlowManager.Instance.OpenStageMap();
             });
+            RectTransform exitRT = exitMissionBtn.GetComponent<RectTransform>();
+            exitRT.anchorMin = new Vector2(1f, 0.5f);
+            exitRT.anchorMax = new Vector2(1f, 0.5f);
+            exitRT.pivot = new Vector2(1f, 0.5f);
 
-            // Checklist container (Under header)
-            GameObject listContainerObj = new GameObject("ChecklistContainer");
-            listContainerObj.transform.SetParent(panel.transform, false);
-            RectTransform lcRT = listContainerObj.AddComponent<RectTransform>();
-            lcRT.anchorMin = new Vector2(0.05f, 0.82f);
-            lcRT.anchorMax = new Vector2(0.95f, 0.9f);
-            lcRT.offsetMin = Vector2.zero;
-            lcRT.offsetMax = Vector2.zero;
-            HorizontalLayoutGroup hlg = listContainerObj.AddComponent<HorizontalLayoutGroup>();
-            hlg.spacing = 30;
-            hlg.childControlWidth = true;
-            hlg.childControlHeight = true;
-            hlg.childForceExpandWidth = true;
-            hlg.childForceExpandHeight = true;
+            Text comboText = CreateUIText("ComboBanner", panel.transform, "⚡ COMBO x2!", 32, new Color(1f, 0.92f, 0.2f), FontStyle.Bold, new Vector2(0, 410), new Vector2(500, 50));
+            comboText.gameObject.SetActive(false);
 
-            // Playfield Spawn Area (Where items are placed on screen)
-            GameObject spawnAreaObj = new GameObject("ItemSpawnArea");
-            spawnAreaObj.transform.SetParent(panel.transform, false);
-            RectTransform saRT = spawnAreaObj.AddComponent<RectTransform>();
-            saRT.anchorMin = new Vector2(0.08f, 0.08f);
-            saRT.anchorMax = new Vector2(0.92f, 0.8f);
-            saRT.offsetMin = Vector2.zero;
-            saRT.offsetMax = Vector2.zero;
+            // 2. Upper Battlefield Area (Target / Enemy Section)
+            // Enemy Name Tag
+            Text enemyNameText = CreateUIText("EnemyName", panel.transform, "DOCTOR SAWIT MAN", 22, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 375), new Vector2(600, 36));
 
-            // Educational Popup Modal
-            GameObject popupPanel = CreateFullScreenPanel("ItemFoundPopup", panel.transform, new Color(0f, 0f, 0f, 0.78f));
+            // Enemy HP Bar Container
+            GameObject hpBarObj = CreateUIBox("HPBarContainer", panel.transform, new Color(0.12f, 0.05f, 0.05f, 0.95f));
+            RectTransform hpBarRT = hpBarObj.GetComponent<RectTransform>();
+            hpBarRT.anchoredPosition = new Vector2(0, 340);
+            hpBarRT.sizeDelta = new Vector2(520, 28);
 
-            GameObject popupCard = CreateUIBox("PopupCard", popupPanel.transform, new Color(0.12f, 0.18f, 0.15f, 0.98f));
-            RectTransform cardRT = popupCard.GetComponent<RectTransform>();
-            cardRT.sizeDelta = new Vector2(740, 540);
-            cardRT.anchoredPosition = Vector2.zero;
+            // HP Red Background Bar (Revealed when HP decreases!)
+            GameObject hpBgObj = new GameObject("HPBg", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            hpBgObj.transform.SetParent(hpBarObj.transform, false);
+            RectTransform hpBgRT = hpBgObj.GetComponent<RectTransform>();
+            hpBgRT.anchorMin = Vector2.zero;
+            hpBgRT.anchorMax = Vector2.one;
+            hpBgRT.offsetMin = new Vector2(2, 2);
+            hpBgRT.offsetMax = new Vector2(-2, -2);
+            Image hpBgImg = hpBgObj.GetComponent<Image>();
+            hpBgImg.sprite = Match3CombatManager.GetWhiteSprite();
+            hpBgImg.color = new Color(0.45f, 0.12f, 0.12f, 1f); // Dark Red background exposed as HP decreases
+            hpBgImg.raycastTarget = false;
 
-            Text popupTitle = CreateUIText("PopupTitle", popupCard.transform, "OBJEK DITEMUKAN!", 30, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 205), new Vector2(650, 50));
+            // HP Fill (Front Health Bar that shrinks dynamically)
+            GameObject hpFillObj = new GameObject("HPFill", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            hpFillObj.transform.SetParent(hpBarObj.transform, false);
+            RectTransform hpFillRT = hpFillObj.GetComponent<RectTransform>();
+            hpFillRT.anchorMin = Vector2.zero;
+            hpFillRT.anchorMax = Vector2.one;
+            hpFillRT.offsetMin = new Vector2(2, 2);
+            hpFillRT.offsetMax = new Vector2(-2, -2);
+            Image hpFillImg = hpFillObj.GetComponent<Image>();
+            hpFillImg.sprite = Match3CombatManager.GetWhiteSprite();
+            hpFillImg.type = Image.Type.Filled;
+            hpFillImg.fillMethod = Image.FillMethod.Horizontal;
+            hpFillImg.fillAmount = 1f;
+            hpFillImg.color = new Color(0.2f, 0.88f, 0.38f);
+            hpFillImg.raycastTarget = false;
 
-            GameObject popImgObj = new GameObject("PopupItemImage");
-            popImgObj.transform.SetParent(popupCard.transform, false);
-            RectTransform popImgRT = popImgObj.AddComponent<RectTransform>();
-            popImgRT.sizeDelta = new Vector2(160, 160);
-            popImgRT.anchoredPosition = new Vector2(0, 95);
-            Image popupImg = popImgObj.AddComponent<Image>();
-            popupImg.preserveAspect = true;
+            // HP Text
+            Text hpText = CreateUIText("HPText", hpBarObj.transform, "HP: 500 / 500 (100%)", 17, Color.white, FontStyle.Bold, Vector2.zero, new Vector2(500, 26));
 
-            Text popupNote = CreateUIText("PopupNote", popupCard.transform, "Catatan edukasi...", 22, Color.white, FontStyle.Normal, new Vector2(0, -55), new Vector2(640, 140));
+            // Enemy Character Sprite
+            GameObject bossArtObj = new GameObject("BossTargetArt");
+            bossArtObj.transform.SetParent(panel.transform, false);
+            RectTransform artRT = bossArtObj.AddComponent<RectTransform>();
+            artRT.sizeDelta = new Vector2(340, 340);
+            artRT.anchoredPosition = new Vector2(0, 195);
+            Image enemyImg = bossArtObj.AddComponent<Image>();
+            enemyImg.sprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_idle");
+            if (enemyImg.sprite == null) enemyImg.sprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man");
+            enemyImg.preserveAspect = true;
+            enemyImg.raycastTarget = false;
 
-            Button popupContinueBtn = CreateUIButton("BtnPopupContinue", popupCard.transform, "LANJUT INVESTIGASI ▶", new Vector2(0, -195), new Vector2(360, 60), new Color(0.18f, 0.65f, 0.32f), null);
+            // 3. Lower Match-3 Board Area
+            GameObject boardFrameObj = CreateUIBox("BoardFrame", panel.transform, new Color(0.06f, 0.12f, 0.09f, 0.96f));
+            RectTransform boardFrameRT = boardFrameObj.GetComponent<RectTransform>();
+            boardFrameRT.anchoredPosition = new Vector2(0, -225);
+            boardFrameRT.sizeDelta = new Vector2(644, 556);
 
-            popupPanel.SetActive(false);
+            // Grid Container (Inside Board Frame)
+            GameObject gridContainerObj = new GameObject("GridContainer", typeof(RectTransform));
+            gridContainerObj.transform.SetParent(boardFrameObj.transform, false);
+            RectTransform gridRT = gridContainerObj.GetComponent<RectTransform>();
+            gridRT.sizeDelta = new Vector2(616, 528);
+            gridRT.anchoredPosition = Vector2.zero;
 
-            // Register with HiddenObjectManager
-            if (HiddenObjectManager.Instance != null)
+            // Pre-spawn cell slot backings for clear visual grid layout
+            for (int x = 0; x < Match3CombatManager.COLUMNS; x++)
             {
-                HiddenObjectManager.Instance.SetupUI(
+                for (int y = 0; y < Match3CombatManager.ROWS; y++)
+                {
+                    GameObject slotObj = new GameObject($"SlotBg_{x}_{y}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                    slotObj.transform.SetParent(gridRT, false);
+                    RectTransform sRT = slotObj.GetComponent<RectTransform>();
+                    sRT.sizeDelta = new Vector2(Match3CombatManager.TILE_SIZE, Match3CombatManager.TILE_SIZE);
+                    sRT.anchoredPosition = Match3CombatManager.Instance != null ?
+                        Match3CombatManager.Instance.CalculateTilePosition(x, y) :
+                        new Vector2(-264f + x * 88f, -220f + y * 88f);
+                    Image slotImg = slotObj.GetComponent<Image>();
+                    slotImg.color = new Color(0.12f, 0.2f, 0.16f, 0.72f);
+                    slotImg.raycastTarget = false;
+                }
+            }
+
+            // 4. Transparent Projectile & Damage Text Layers
+            GameObject projLayerObj = new GameObject("ProjectileLayer", typeof(RectTransform));
+            projLayerObj.transform.SetParent(panel.transform, false);
+            RectTransform projLayerRT = projLayerObj.GetComponent<RectTransform>();
+            projLayerRT.anchorMin = Vector2.zero;
+            projLayerRT.anchorMax = Vector2.one;
+            projLayerRT.offsetMin = Vector2.zero;
+            projLayerRT.offsetMax = Vector2.zero;
+
+            GameObject dmgLayerObj = new GameObject("DamageTextLayer", typeof(RectTransform));
+            dmgLayerObj.transform.SetParent(panel.transform, false);
+            RectTransform dmgLayerRT = dmgLayerObj.GetComponent<RectTransform>();
+            dmgLayerRT.anchorMin = Vector2.zero;
+            dmgLayerRT.anchorMax = Vector2.one;
+            dmgLayerRT.offsetMin = Vector2.zero;
+            dmgLayerRT.offsetMax = Vector2.zero;
+
+            // 5. Victory Modal
+            GameObject winModal = CreateFullScreenPanel("VictoryModal", panel.transform, new Color(0f, 0f, 0f, 0.82f));
+            GameObject winCard = CreateUIBox("WinCard", winModal.transform, new Color(0.08f, 0.18f, 0.12f, 0.98f));
+            RectTransform winCardRT = winCard.GetComponent<RectTransform>();
+            winCardRT.sizeDelta = new Vector2(760, 520);
+            winCardRT.anchoredPosition = Vector2.zero;
+
+            CreateUIText("WinTitle", winCard.transform, "🎯 TARGET BERHASIL DIKALAHKAN!", 32, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 190), new Vector2(700, 50));
+            Text winStatsText = CreateUIText("WinStats", winCard.transform, "Hasil kombinasimu berhasil memukul mundur lawan!", 20, Color.white, FontStyle.Normal, new Vector2(0, 10), new Vector2(660, 220));
+            Button winContinueBtn = CreateUIButton("BtnWinContinue", winCard.transform, "LANJUTKAN MISI ▶", new Vector2(0, -180), new Vector2(360, 65), new Color(0.18f, 0.65f, 0.32f), null);
+            winModal.SetActive(false);
+
+            // 6. Defeat Modal
+            GameObject loseModal = CreateFullScreenPanel("DefeatModal", panel.transform, new Color(0f, 0f, 0f, 0.82f));
+            GameObject loseCard = CreateUIBox("LoseCard", loseModal.transform, new Color(0.18f, 0.08f, 0.08f, 0.98f));
+            RectTransform loseCardRT = loseCard.GetComponent<RectTransform>();
+            loseCardRT.sizeDelta = new Vector2(760, 480);
+            loseCardRT.anchoredPosition = Vector2.zero;
+
+            CreateUIText("LoseTitle", loseCard.transform, "⚠️ LANGKAH HABIS!", 34, new Color(0.95f, 0.3f, 0.3f), FontStyle.Bold, new Vector2(0, 160), new Vector2(700, 50));
+            CreateUIText("LoseDesc", loseCard.transform, "Doctor Sawit Man belum berhasil dipukul mundur.\nAtur kombinasi puzzle dan strategi yang lebih efektif untuk menumbangkannya!", 20, Color.white, FontStyle.Normal, new Vector2(0, 40), new Vector2(660, 120));
+            Button loseRetryBtn = CreateUIButton("BtnLoseRetry", loseCard.transform, "🔄 COBA LAGI", new Vector2(-160, -140), new Vector2(280, 60), new Color(0.72f, 0.22f, 0.22f), null);
+            Button loseExitBtn = CreateUIButton("BtnLoseExit", loseCard.transform, "🗺️ PETA MISI", new Vector2(160, -140), new Vector2(260, 60), new Color(0.3f, 0.35f, 0.4f), null);
+            loseModal.SetActive(false);
+
+            // Register with Match3CombatManager
+            if (Match3CombatManager.Instance != null)
+            {
+                Match3CombatManager.Instance.SetupUI(
                     panel,
+                    gridRT,
+                    projLayerRT,
+                    dmgLayerRT,
                     titleText,
-                    listContainerObj.transform,
-                    spawnAreaObj.transform,
-                    popupPanel,
-                    popupTitle,
-                    popupNote,
-                    popupImg,
-                    popupContinueBtn
+                    movesText,
+                    scoreText,
+                    comboText,
+                    exitMissionBtn,
+                    enemyImg,
+                    hpFillImg,
+                    hpText,
+                    enemyNameText,
+                    winModal,
+                    winStatsText,
+                    winContinueBtn,
+                    loseModal,
+                    loseRetryBtn,
+                    loseExitBtn
                 );
             }
 

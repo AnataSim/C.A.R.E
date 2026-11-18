@@ -186,10 +186,7 @@ namespace CARE.Gameplay
                 GameObject labelObj = new GameObject("Item_" + item.itemName);
                 labelObj.transform.SetParent(itemListContainer, false);
                 Text labelText = labelObj.AddComponent<Text>();
-                Font labelFont = null;
-                try { labelFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); } catch {}
-                if (labelFont == null) { try { labelFont = Resources.GetBuiltinResource<Font>("Arial.ttf"); } catch {} }
-                if (labelFont == null) labelFont = Font.CreateDynamicFontFromOSFont("Arial", 20);
+                Font labelFont = Match3CombatManager.GetGameFont();
 
                 labelText.font = labelFont;
                 labelText.fontSize = 20;

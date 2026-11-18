@@ -185,7 +185,14 @@ namespace CARE.Core
                 CareAudioManager.Instance.PlayInvestigationBGM();
             }
 
-            if (HiddenObjectManager.Instance != null && items != null)
+            if (Match3CombatManager.Instance != null)
+            {
+                Match3CombatManager.Instance.StartCombat(stage, level, locationName, () =>
+                {
+                    OnHiddenObjectLevelComplete();
+                });
+            }
+            else if (HiddenObjectManager.Instance != null && items != null)
             {
                 HiddenObjectManager.Instance.StartLevel(locationName, items, () =>
                 {
