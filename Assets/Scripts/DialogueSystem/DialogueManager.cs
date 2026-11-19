@@ -28,6 +28,7 @@ namespace CARE.UI
         [SerializeField] private Sprite penjelajahPortrait;
         [SerializeField] private Sprite sawitManPortrait;
         [SerializeField] private Sprite monyetPortrait;
+        [SerializeField] private Sprite harimauPortrait;
 
         [Header("Settings")]
         [SerializeField] private float typingSpeed = 0.035f;
@@ -83,9 +84,17 @@ namespace CARE.UI
             }
 
             // Auto-load portraits if not assigned
+            if (penjelajahPortrait == null) penjelajahPortrait = Resources.Load<Sprite>("Character/Karakter_Utama");
+            if (penjelajahPortrait == null) penjelajahPortrait = Resources.Load<Sprite>("Character/penjelajah");
             if (penjelajahPortrait == null) penjelajahPortrait = Resources.Load<Sprite>("TemporaryAssets/Characters/penjelajah_portrait");
+
             if (sawitManPortrait == null) sawitManPortrait = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_portrait");
+
+            if (monyetPortrait == null) monyetPortrait = Resources.Load<Sprite>("Animalia/MonyetKesakitan");
             if (monyetPortrait == null) monyetPortrait = Resources.Load<Sprite>("TemporaryAssets/Characters/monyet_terdampak");
+
+            if (harimauPortrait == null) harimauPortrait = Resources.Load<Sprite>("Animalia/HarimauSumateraKesakitan");
+            if (harimauPortrait == null) harimauPortrait = Resources.Load<Sprite>("TemporaryAssets/Characters/harimau_terdampak");
             if (typewriterSFX == null) typewriterSFX = Resources.Load<AudioClip>("Audio/sfx_click");
 
             // Auto-load voice speech tone clips from Resources/Audio/tone/
@@ -202,7 +211,12 @@ namespace CARE.UI
             // Set Background if specified in line
             if (!string.IsNullOrEmpty(line.backgroundKey))
             {
-                Sprite bgSprite = Resources.Load<Sprite>(line.backgroundKey);
+                string bgKey = line.backgroundKey;
+                if (bgKey.EndsWith(".png") || bgKey.EndsWith(".jpg") || bgKey.EndsWith(".jpeg"))
+                {
+                    bgKey = System.IO.Path.ChangeExtension(bgKey, null);
+                }
+                Sprite bgSprite = Resources.Load<Sprite>(bgKey);
                 if (bgSprite != null)
                 {
                     if (backgroundImage == null && dialoguePanel != null)
@@ -234,6 +248,11 @@ namespace CARE.UI
                 {
                     portraitImage.gameObject.SetActive(true);
                     portraitImage.sprite = monyetPortrait;
+                }
+                else if (line.portraitKey == "harimau" && harimauPortrait != null)
+                {
+                    portraitImage.gameObject.SetActive(true);
+                    portraitImage.sprite = harimauPortrait;
                 }
                 else
                 {

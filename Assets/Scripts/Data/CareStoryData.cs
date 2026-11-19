@@ -70,30 +70,30 @@ namespace CARE.Story
         // ----------------- OPENING STORY SCENES -----------------
         public static List<DialogueLine> Scene01_HutanTerbakar = new List<DialogueLine>()
         {
-            new DialogueLine("NARATOR", "Hutan tropis menjadi tempat hidup bagi berbagai jenis tumbuhan dan satwa. Setiap bagian ekosistem memiliki peran dalam menjaga keseimbangannya.", "none", "fire", "Environtment/image 2614"),
-            new DialogueLine("NARATOR", "Namun, sebagian kawasan hutan kini mengalami kerusakan akibat pembukaan lahan yang tidak bertanggung jawab dan kebakaran.", "none", "", "Environtment/image 2614"),
-            new DialogueLine("NARATOR", "Api dan asap mengubah keadaan hutan. Tempat mencari makan, berlindung, dan berkembang biak bagi satwa ikut terancam.", "none", "", "Environtment/image 2614")
+            new DialogueLine("NARATOR", "Hutan tropis menjadi tempat hidup bagi berbagai jenis tumbuhan dan satwa. Setiap bagian ekosistem memiliki peran dalam menjaga keseimbangannya.", "none", "fire", "Environtment/BackgroundOpening"),
+            new DialogueLine("NARATOR", "Namun, sebagian kawasan hutan kini mengalami kerusakan akibat pembukaan lahan yang tidak bertanggung jawab dan kebakaran.", "none", "", "Environtment/BackgroundOpening"),
+            new DialogueLine("NARATOR", "Api dan asap mengubah keadaan hutan. Tempat mencari makan, berlindung, dan berkembang biak bagi satwa ikut terancam.", "none", "", "Environtment/BackgroundOpening")
         };
 
         public static List<DialogueLine> Scene02_SatwaTerdampak = new List<DialogueLine>()
         {
-            new DialogueLine("NARATOR", "Satwa liar tidak selalu dapat berpindah dengan mudah ketika habitatnya terganggu.", "monyet", "", "Environtment/image 2614"),
-            new DialogueLine("NARATOR", "Sebagian kehilangan tempat berlindung dan sumber makanan. Sebagian lainnya terpaksa menjauh dari wilayah tempat mereka hidup.", "monyet", "", "Environtment/image 2614"),
-            new DialogueLine("NARATOR", "Di antara keadaan tersebut, masih ada satwa yang membutuhkan pertolongan.", "monyet", "", "Environtment/image 2614")
+            new DialogueLine("NARATOR", "Satwa liar tidak selalu dapat berpindah dengan mudah ketika habitatnya terganggu.", "monyet", "", "Environtment/BackgroundOpening"),
+            new DialogueLine("NARATOR", "Sebagian kehilangan tempat berlindung dan sumber makanan. Sebagian lainnya terpaksa menjauh dari wilayah tempat mereka hidup.", "monyet", "", "Environtment/BackgroundOpening"),
+            new DialogueLine("NARATOR", "Di antara keadaan tersebut, masih ada satwa yang membutuhkan pertolongan.", "monyet", "", "Environtment/BackgroundOpening")
         };
 
         public static List<DialogueLine> Scene03_PenjelajahTiba = new List<DialogueLine>()
         {
-            new DialogueLine("NARATOR", "Seorang penjelajah tiba di kawasan tersebut setelah mengetahui bahwa hutan mengalami kebakaran.", "none", "", "Environtment/image 2614"),
-            new DialogueLine("PENJELAJAH", "Kondisi hutan ini lebih parah dari yang kubayangkan. Aku harus memeriksa keadaan di sekitar.", "penjelajah", "", "Environtment/image 2614"),
-            new DialogueLine("PENJELAJAH", "Pertama, aku perlu memastikan apakah masih ada satwa yang membutuhkan bantuan.", "penjelajah", "", "Environtment/image 2614")
+            new DialogueLine("NARATOR", "Seorang penjelajah tiba di kawasan tersebut setelah mengetahui bahwa hutan mengalami kebakaran.", "none", "", "Environtment/BackgroundOpening"),
+            new DialogueLine("PENJELAJAH", "Kondisi hutan ini lebih parah dari yang kubayangkan. Aku harus memeriksa keadaan di sekitar.", "penjelajah", "", "Environtment/BackgroundOpening"),
+            new DialogueLine("PENJELAJAH", "Pertama, aku perlu memastikan apakah masih ada satwa yang membutuhkan bantuan.", "penjelajah", "", "Environtment/BackgroundOpening")
         };
 
         public static List<DialogueLine> Scene04_SatwaTerluka = new List<DialogueLine>()
         {
             new DialogueLine("NARATOR", "Di dekat pepohonan yang rusak, penjelajah menemukan seekor satwa yang masih berada di lokasi.", "none", "", "Environtment/scene_wounded_animal"),
             new DialogueLine("PENJELAJAH", "Tenang. Aku tidak akan menyakitimu. Aku akan mencari cara agar kamu bisa dibawa ke tempat yang lebih aman.", "penjelajah", "", "Environtment/scene_wounded_animal"),
-            new DialogueLine("NARATOR", "Sebelum melanjutkan perjalanan, penjelajah memastikan satwa tersebut mendapat pertolongan yang diperlukan.", "monyet", "", "Environtment/scene_wounded_animal")
+            new DialogueLine("NARATOR", "Sebelum melanjutkan perjalanan, penjelajah memastikan satwa tersebut mendapat pertolongan yang diperlukan.", "harimau", "", "Environtment/scene_wounded_animal")
         };
 
         public static List<DialogueLine> Scene05_MisiDimulai = new List<DialogueLine>()

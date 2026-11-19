@@ -348,7 +348,8 @@ namespace CARE.Core
                 {
                     envImg.preserveAspect = false;
                     envImg.color = Color.white;
-                    Sprite cleanBg = Resources.Load<Sprite>("Environtment/title_screen_bg");
+                    Sprite cleanBg = Resources.Load<Sprite>("Environtment/BackgroundOpening");
+                    if (cleanBg == null) cleanBg = Resources.Load<Sprite>("Environtment/title_screen_bg");
                     if (cleanBg != null) envImg.sprite = cleanBg;
                 }
             }
@@ -371,6 +372,9 @@ namespace CARE.Core
                 if (grpImg != null)
                 {
                     grpImg.preserveAspect = true;
+                    Sprite logoCare = Resources.Load<Sprite>("UI/Logo_CARE");
+                    if (logoCare == null) logoCare = Resources.Load<Sprite>("TemporaryAssets/UI/logo_care");
+                    if (logoCare != null) grpImg.sprite = logoCare;
                 }
                 Button btn = groupBtn.GetComponent<Button>();
                 if (btn != null)
@@ -395,12 +399,20 @@ namespace CARE.Core
                     playRT.anchorMax = new Vector2(0.5f, 0.38f);
                     playRT.pivot = new Vector2(0.5f, 0.5f);
                     playRT.anchoredPosition = Vector2.zero;
-                    playRT.sizeDelta = new Vector2(380, 125);
+                    playRT.sizeDelta = new Vector2(480, 75);
                 }
                 Image playImg = playBtn.GetComponent<Image>();
                 if (playImg != null)
                 {
                     playImg.preserveAspect = true;
+                    Sprite playSprite = Resources.Load<Sprite>("Buttons/KLIK_UNTUK_MULAI");
+                    if (playSprite == null) playSprite = Resources.Load<Sprite>("TemporaryAssets/UI/klik_untuk_mulai");
+                    if (playSprite != null)
+                    {
+                        playImg.sprite = playSprite;
+                        Text playText = playBtn.GetComponentInChildren<Text>();
+                        if (playText != null) playText.enabled = false;
+                    }
                 }
                 Button btn = playBtn.GetComponent<Button>();
                 if (btn == null) btn = playBtn.gameObject.AddComponent<Button>();
@@ -469,7 +481,8 @@ namespace CARE.Core
         {
             GameObject panel = CreateFullScreenPanel("TitlePanel", parent, new Color(0.08f, 0.14f, 0.1f, 1f));
             Image bgImg = panel.GetComponent<Image>();
-            Sprite titleBg = Resources.Load<Sprite>("Environtment/title_screen_bg");
+            Sprite titleBg = Resources.Load<Sprite>("Environtment/BackgroundOpening");
+            if (titleBg == null) titleBg = Resources.Load<Sprite>("Environtment/title_screen_bg");
             if (titleBg == null) titleBg = Resources.Load<Sprite>("Environtment/image 2614");
             if (titleBg != null)
             {
@@ -477,8 +490,23 @@ namespace CARE.Core
                 bgImg.color = Color.white;
             }
 
-            // Jika titleBg belum ada, tampilkan teks judul alternatif
-            if (titleBg == null)
+            Sprite logoCare = Resources.Load<Sprite>("UI/Logo_CARE");
+            if (logoCare == null) logoCare = Resources.Load<Sprite>("TemporaryAssets/UI/logo_care");
+            if (logoCare != null)
+            {
+                GameObject logoObj = new GameObject("LogoCARE");
+                logoObj.transform.SetParent(panel.transform, false);
+                Image logoImg = logoObj.AddComponent<Image>();
+                logoImg.sprite = logoCare;
+                logoImg.preserveAspect = true;
+                RectTransform logoRT = logoObj.GetComponent<RectTransform>();
+                logoRT.anchorMin = new Vector2(0.5f, 0.68f);
+                logoRT.anchorMax = new Vector2(0.5f, 0.68f);
+                logoRT.pivot = new Vector2(0.5f, 0.5f);
+                logoRT.anchoredPosition = Vector2.zero;
+                logoRT.sizeDelta = new Vector2(760, 270);
+            }
+            else
             {
                 CreateUIText("TitleText", panel.transform, "C.A.R.E.", 80, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 150), new Vector2(900, 120));
                 CreateUIText("SubtitleText", panel.transform, "Cegah. Api. Rawat. Ekosistem.", 28, Color.white, FontStyle.Normal, new Vector2(0, 60), new Vector2(900, 60));
@@ -587,9 +615,10 @@ namespace CARE.Core
         {
             GameObject panel = CreateFullScreenPanel("DialoguePanel", parent, new Color(0.05f, 0.08f, 0.06f, 0.96f));
 
-            // Background scenery art if available (default hutan terbakar)
+            // Background scenery art if available (default latar pembukaan hutan)
             Image bgImg = panel.GetComponent<Image>();
-            Sprite forestBg = Resources.Load<Sprite>("Environtment/image 2614");
+            Sprite forestBg = Resources.Load<Sprite>("Environtment/BackgroundOpening");
+            if (forestBg == null) forestBg = Resources.Load<Sprite>("Environtment/image 2614");
             if (forestBg != null)
             {
                 bgImg.sprite = forestBg;
