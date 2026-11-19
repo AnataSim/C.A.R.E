@@ -130,6 +130,7 @@ namespace CARE.Audio
         public void PlayRestorationHubBGM() => PlayBGM(bgmRestorationHub);
         public void PlayInvestigationBGM() => PlayBGM(bgmInvestigation);
         public void PlayBossBGM() => PlayBGM(bgmBossSawitMan);
+        public void PlayCombatBGM() => PlayBGM(bgmCombat26s != null ? bgmCombat26s : bgmBossSawitMan);
         public void PlayCombat26sBGM() => PlayBGM(bgmCombat26s);
         public void PlayBattle60sBGM() => PlayBGM(bgmBattle60s);
         public void PlayBattle120sBGM() => PlayBGM(bgmBattle120s);

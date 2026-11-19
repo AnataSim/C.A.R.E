@@ -236,7 +236,7 @@ namespace CARE.Core
 
             if (CareAudioManager.Instance != null)
             {
-                CareAudioManager.Instance.PlayCombatBGM();
+                CareAudioManager.Instance.PlayBossBGM();
             }
 
             if (Match3CombatManager.Instance != null)
