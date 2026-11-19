@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using CARE.Story;
+using CARE.Core;
 
 namespace CARE.UI
 {
@@ -284,7 +285,7 @@ namespace CARE.UI
             }
 
             // Konfrontasi stage lanjut (Stage 2 atau 3) bernada tegang/marah kecuali dialog mengaku kalah
-            if (CARE.GameFlowManager.Instance != null && CARE.GameFlowManager.Instance.currentStage >= 2)
+            if (GameFlowManager.Instance != null && GameFlowManager.Instance.currentStage >= 2)
             {
                 if (!txt.Contains("MENGAKUI") && !txt.Contains("BERSEDIA MENYERAHKAN"))
                 {
