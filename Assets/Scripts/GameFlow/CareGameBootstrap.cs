@@ -20,6 +20,7 @@ namespace CARE.Core
         public static CareGameBootstrap Instance { get; private set; }
 
         private Canvas mainCanvas;
+        [SerializeField] private Font customFont;
         private Font gameFont;
 
         // UI Panels
@@ -96,6 +97,7 @@ namespace CARE.Core
 
         private Font GetDefaultFont()
         {
+            if (customFont != null) return customFont;
             return Match3CombatManager.GetGameFont();
         }
 

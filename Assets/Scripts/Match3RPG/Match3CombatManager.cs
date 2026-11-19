@@ -1806,9 +1806,22 @@ namespace CARE.Gameplay
         public static Font GetGameFont()
         {
             if (cachedFont != null) return cachedFont;
-            try { cachedFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); } catch {}
+
+            // 1. Prioritaskan Font Lilita One
+            try { cachedFont = Resources.Load<Font>("Fonts/LilitaOne-Regular"); } catch {}
+            if (cachedFont == null) { try { cachedFont = Resources.Load<Font>("LilitaOne-Regular"); } catch {} }
+            if (cachedFont == null) { try { cachedFont = Resources.Load<Font>("Fonts/Lilita One"); } catch {} }
+            if (cachedFont == null) { try { cachedFont = Resources.Load<Font>("Lilita One"); } catch {} }
+
+            // 2. Fallback OS dynamic font jika Lilita One terinstall di sistem OS
+            if (cachedFont == null) { try { cachedFont = Font.CreateDynamicFontFromOSFont("Lilita One", 16); } catch {} }
+            if (cachedFont == null) { try { cachedFont = Font.CreateDynamicFontFromOSFont("LilitaOne", 16); } catch {} }
+
+            // 3. Fallback bawaan Unity
+            if (cachedFont == null) { try { cachedFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); } catch {} }
             if (cachedFont == null) { try { cachedFont = Resources.Load<Font>("LegacyRuntime.ttf"); } catch {} }
             if (cachedFont == null) { try { cachedFont = Font.CreateDynamicFontFromOSFont("Arial", 16); } catch {} }
+
             return cachedFont;
         }
 

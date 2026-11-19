@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using TMPro;
 using CARE.Story;
 using CARE.Core;
+using CARE.Gameplay;
 
 namespace CARE.UI
 {
@@ -124,6 +125,14 @@ namespace CARE.UI
             skipButton = skipBtn;
             if (bg != null) backgroundImage = bg;
             else if (panel != null) backgroundImage = panel.GetComponent<Image>();
+
+            // Terapkan font Lilita One
+            Font f = Match3CombatManager.GetGameFont();
+            if (f != null)
+            {
+                if (speakerNameText != null) speakerNameText.font = f;
+                if (dialogueBodyText != null) dialogueBodyText.font = f;
+            }
 
             if (continueButton != null)
             {
