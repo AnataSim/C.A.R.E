@@ -20,6 +20,7 @@ namespace CARE.Audio
         [SerializeField] private AudioClip bgmEnding;
         [SerializeField] private AudioClip bgmCombat26s;
         [SerializeField] private AudioClip bgmBattle60s;
+        [SerializeField] private AudioClip bgmBattle120s;
 
         [Header("Ambience Loops")]
         [SerializeField] private AudioClip ambForestFire;
@@ -75,6 +76,7 @@ namespace CARE.Audio
             if (bgmEnding == null) bgmEnding = Resources.Load<AudioClip>("Audio/bgm_nature_hub");
             if (bgmCombat26s == null) bgmCombat26s = Resources.Load<AudioClip>("Audio/bgm_combat_26s");
             if (bgmBattle60s == null) bgmBattle60s = Resources.Load<AudioClip>("Audio/bgm_battle_60s");
+            if (bgmBattle120s == null) bgmBattle120s = Resources.Load<AudioClip>("Audio/bgm_battle_120s");
 
             if (ambForestFire == null) ambForestFire = Resources.Load<AudioClip>("Audio/amb_fire");
             if (ambTropicalMorning == null) ambTropicalMorning = Resources.Load<AudioClip>("Audio/amb_rain_birds");
@@ -130,6 +132,7 @@ namespace CARE.Audio
         public void PlayBossBGM() => PlayBGM(bgmBossSawitMan);
         public void PlayCombat26sBGM() => PlayBGM(bgmCombat26s);
         public void PlayBattle60sBGM() => PlayBGM(bgmBattle60s);
+        public void PlayBattle120sBGM() => PlayBGM(bgmBattle120s);
         public void PlayFireAmbience() => PlayAmbience(ambForestFire);
         public void PlayMorningAmbience() => PlayAmbience(ambTropicalMorning);
         public void PlayItemFoundSFX() => PlaySFX(sfxItemFound);
