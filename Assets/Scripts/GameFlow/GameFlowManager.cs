@@ -169,95 +169,26 @@ namespace CARE.Core
 
         /// <summary>
         /// Memulai Stage tertentu (1, 2, atau 3).
+        /// Sesuai instruksi dan naskah BOSS STAGE:
+        /// Saat pemain menekan MULAI pada Stage 1/2/3, permainan puzzle tidak langsung dimulai,
+        /// melainkan menampilkan adegan percakapan antara MC dan Boss terlebih dahulu.
+        /// Setelah percakapan selesai -> ScreenFader (fade-out ke hitam lalu fade-in) -> mulai pertarungan Match-3.
+        /// Setelah pertarungan selesai (Boss kalah) -> ScreenFader -> tampilkan percakapan Dr. Sawit Man (defeat dialogue).
+        /// Setelah percakapan kekalahan selesai -> Buka reward satwa & kembali ke Lobby atau Ending.
         /// </summary>
         public void StartStage(int stageNumber)
         {
             currentStage = stageNumber;
             currentLevel = 1;
-            StartHiddenObjectLevel(stageNumber, 1);
+
+            StartStageIntroDialogue(stageNumber);
         }
 
-        public void StartHiddenObjectLevel(int stage, int level)
-        {
-            currentState = GameState.HiddenObjectLevel;
-            currentStage = stage;
-            currentLevel = level;
-            HideAllScreens();
-            if (hiddenObjectPanel != null) hiddenObjectPanel.SetActive(true);
-
-            string locationName = "";
-            List<HiddenItemData> items = null;
-
-            if (stage == 1 && level == 1)
-            {
-                locationName = "Area Tepi Hutan";
-                items = CareStoryDatabase.Stage1_Level1_Items;
-            }
-            else if (stage == 1 && level == 2)
-            {
-                locationName = "Area Pepohonan";
-                items = CareStoryDatabase.Stage1_Level2_Items;
-            }
-            else if (stage == 2 && level == 1)
-            {
-                locationName = "Jalur Hutan Terbuka";
-                items = CareStoryDatabase.Stage2_Level1_Items;
-            }
-            else if (stage == 2 && level == 2)
-            {
-                locationName = "Pos Pemeriksaan";
-                items = CareStoryDatabase.Stage2_Level2_Items;
-            }
-            else if (stage == 3 && level == 1)
-            {
-                locationName = "Area Evakuasi";
-                items = CareStoryDatabase.Stage3_Level1_Items;
-            }
-            else if (stage == 3 && level == 2)
-            {
-                locationName = "Area Pemulihan";
-                items = CareStoryDatabase.Stage3_Level2_Items;
-            }
-
-            if (CareAudioManager.Instance != null)
-            {
-                CareAudioManager.Instance.PlayInvestigationBGM();
-            }
-
-            if (Match3CombatManager.Instance != null)
-            {
-                Match3CombatManager.Instance.StartCombat(stage, level, locationName, () =>
-                {
-                    OnHiddenObjectLevelComplete();
-                });
-            }
-            else if (HiddenObjectManager.Instance != null && items != null)
-            {
-                HiddenObjectManager.Instance.StartLevel(locationName, items, () =>
-                {
-                    OnHiddenObjectLevelComplete();
-                });
-            }
-        }
-
-        private void OnHiddenObjectLevelComplete()
-        {
-            if (currentLevel == 1)
-            {
-                // Lanjut ke Level 2 Hidden Object
-                StartHiddenObjectLevel(currentStage, 2);
-            }
-            else if (currentLevel == 2)
-            {
-                // Lanjut ke Level 3 Boss Fight
-                StartBossFight(currentStage);
-            }
-        }
-
-        public void StartBossFight(int stage)
+        public void StartStageIntroDialogue(int stageNumber)
         {
             currentState = GameState.BossFight;
-            currentStage = stage;
+            currentStage = stageNumber;
+            currentLevel = 1;
             HideAllScreens();
 
             if (CareAudioManager.Instance != null)
@@ -265,90 +196,144 @@ namespace CARE.Core
                 CareAudioManager.Instance.PlayBossBGM();
             }
 
-            // Tampilkan UI Boss Fight interaktif
-            if (CareGameBootstrap.Instance != null)
-            {
-                CareGameBootstrap.Instance.SetupBossFight(stage);
-            }
-            else if (bossFightPanel != null)
-            {
-                bossFightPanel.SetActive(true);
-            }
-        }
+            List<DialogueLine> introDialogue = null;
+            if (stageNumber == 1) introDialogue = CareStoryDatabase.BossStage1_Intro;
+            else if (stageNumber == 2) introDialogue = CareStoryDatabase.BossStage2_Intro;
+            else if (stageNumber == 3) introDialogue = CareStoryDatabase.BossStage3_Intro;
 
-        public void SubmitBossEvidence(int evidenceIndex)
-        {
-            Debug.Log($"[C.A.R.E.] Pemain menyodorkan bukti {evidenceIndex} ke Doctor Sawit Man pada Stage {currentStage}!");
-
-            if (CareAudioManager.Instance != null)
+            if (DialogueManager.Instance != null && introDialogue != null)
             {
-                CareAudioManager.Instance.PlayItemFoundSFX();
-            }
-
-            List<DialogueLine> defeatDialogue = null;
-            if (currentStage == 1) defeatDialogue = CareStoryDatabase.BossStage1_Defeat;
-            else if (currentStage == 2) defeatDialogue = CareStoryDatabase.BossStage2_Defeat;
-            else defeatDialogue = CareStoryDatabase.BossStage3_Defeat;
-
-            if (CareGameBootstrap.Instance != null)
-            {
-                CareGameBootstrap.Instance.ShowBossDefeatedResponse(currentStage, () =>
+                DialogueManager.Instance.StartDialogue(introDialogue, () =>
                 {
-                    OnBossDefeated(currentStage, defeatDialogue);
+                    // Setelah percakapan selesai: fade-out ke hitam, lalu fade-in ke permainan!
+                    ScreenFader.Do(() =>
+                    {
+                        StartCombatGameplay(stageNumber);
+                    });
                 });
             }
             else
             {
-                OnBossDefeated(currentStage, defeatDialogue);
+                ScreenFader.Do(() =>
+                {
+                    StartCombatGameplay(stageNumber);
+                });
             }
         }
 
-        private void OnBossDefeated(int stage, List<DialogueLine> defeatDialogue)
+        public void StartCombatGameplay(int stageNumber)
+        {
+            currentState = GameState.HiddenObjectLevel;
+            currentStage = stageNumber;
+            currentLevel = 1;
+            HideAllScreens();
+            if (hiddenObjectPanel != null) hiddenObjectPanel.SetActive(true);
+
+            string locationName = "";
+            if (stageNumber == 1) locationName = "Area Tepi Hutan";
+            else if (stageNumber == 2) locationName = "Jalur Hutan Terbuka";
+            else if (stageNumber == 3) locationName = "Area Pemulihan";
+
+            if (CareAudioManager.Instance != null)
+            {
+                CareAudioManager.Instance.PlayCombatBGM();
+            }
+
+            if (Match3CombatManager.Instance != null)
+            {
+                Match3CombatManager.Instance.StartCombat(stageNumber, 1, locationName, () =>
+                {
+                    // Setelah permainan selesai (Boss dikalahkan):
+                    OnStageCombatWon(stageNumber);
+                });
+            }
+        }
+
+        public void StartHiddenObjectLevel(int stage, int level)
+        {
+            StartCombatGameplay(stage);
+        }
+
+        private void OnStageCombatWon(int stageNumber)
+        {
+            // Setelah permainan selesai, muncul lagi scene percakapan Dr. Sawit Man melalui transisi fade
+            ScreenFader.Do(() =>
+            {
+                ShowStageDefeatDialogue(stageNumber);
+            });
+        }
+
+        public void ShowStageDefeatDialogue(int stageNumber)
         {
             HideAllScreens();
+
+            List<DialogueLine> defeatDialogue = null;
+            if (stageNumber == 1) defeatDialogue = CareStoryDatabase.BossStage1_Defeat;
+            else if (stageNumber == 2) defeatDialogue = CareStoryDatabase.BossStage2_Defeat;
+            else if (stageNumber == 3) defeatDialogue = CareStoryDatabase.BossStage3_Defeat;
 
             if (DialogueManager.Instance != null && defeatDialogue != null)
             {
                 DialogueManager.Instance.StartDialogue(defeatDialogue, () =>
                 {
-                    // Unlock animal reward
-                    if (stage == 1) UnlockAnimal("rusa_timor");
-                    else if (stage == 2) UnlockAnimal("orangutan");
-                    else if (stage == 3)
-                    {
-                        UnlockAnimal("gajah_asia");
-                        ShowEnding();
-                        return;
-                    }
-
-                    // Perbarui status Lobby
-                    if (CareGameBootstrap.Instance != null)
-                    {
-                        CareGameBootstrap.Instance.UpdateLobbyUI();
-                    }
-
-                    // Kembali ke Lobby
-                    ShowLobbyRestorasi();
+                    OnStageDefeatDialogueComplete(stageNumber);
                 });
             }
             else
             {
-                if (stage == 1) UnlockAnimal("rusa_timor");
-                else if (stage == 2) UnlockAnimal("orangutan");
-                else if (stage == 3)
-                {
-                    UnlockAnimal("gajah_asia");
-                    ShowEnding();
-                    return;
-                }
-
-                if (CareGameBootstrap.Instance != null)
-                {
-                    CareGameBootstrap.Instance.UpdateLobbyUI();
-                }
-
-                ShowLobbyRestorasi();
+                OnStageDefeatDialogueComplete(stageNumber);
             }
+        }
+
+        private void OnStageDefeatDialogueComplete(int stageNumber)
+        {
+            // Simpan progres ke Local Storage
+            if (CareSaveManager.Instance != null)
+            {
+                CareSaveManager.Instance.MarkLevelCompleted(stageNumber, 1);
+            }
+
+            if (stageNumber == 1)
+            {
+                UnlockAnimal("rusa_timor");
+                ScreenFader.Do(() =>
+                {
+                    if (CareGameBootstrap.Instance != null) CareGameBootstrap.Instance.UpdateLobbyUI();
+                    ShowLobbyRestorasi();
+                });
+            }
+            else if (stageNumber == 2)
+            {
+                UnlockAnimal("orangutan");
+                ScreenFader.Do(() =>
+                {
+                    if (CareGameBootstrap.Instance != null) CareGameBootstrap.Instance.UpdateLobbyUI();
+                    ShowLobbyRestorasi();
+                });
+            }
+            else if (stageNumber == 3)
+            {
+                UnlockAnimal("gajah_asia");
+                ScreenFader.Do(() =>
+                {
+                    ShowEnding();
+                });
+            }
+        }
+
+        public void StartBossFight(int stage)
+        {
+            StartStage(stage);
+        }
+
+        public void SubmitBossEvidence(int evidenceIndex)
+        {
+            OnStageCombatWon(currentStage);
+        }
+
+        private void OnBossDefeated(int stage, List<DialogueLine> defeatDialogue)
+        {
+            ShowStageDefeatDialogue(stage);
         }
 
         public void UnlockAnimal(string animalKey)

@@ -93,6 +93,9 @@ namespace CARE.Core
 
             // Setup Canvas & UI Hierarchy
             SetupCanvasAndUI();
+
+            // Ensure Screen Fader
+            EnsureScreenFader();
         }
 
         private Font GetDefaultFont()
@@ -291,6 +294,29 @@ namespace CARE.Core
 
             // 8. Encyclopedia Modal
             encyclopediaModal = BuildEncyclopediaModal(mainCanvas.transform);
+
+            // 9. Screen Fader Overlay (Fade-In / Fade-Out Transition)
+            BuildScreenFader(mainCanvas.transform);
+        }
+
+        private void BuildScreenFader(Transform parent)
+        {
+            if (ScreenFader.Instance != null) return;
+            GameObject faderObj = CreateFullScreenPanel("ScreenFaderOverlay", parent, Color.black);
+            faderObj.transform.SetAsLastSibling();
+            faderObj.AddComponent<ScreenFader>();
+        }
+
+        private void EnsureScreenFader()
+        {
+            if (ScreenFader.Instance == null)
+            {
+                Canvas cv = mainCanvas != null ? mainCanvas : FindObjectOfType<Canvas>();
+                if (cv != null)
+                {
+                    BuildScreenFader(cv.transform);
+                }
+            }
         }
 
         private void WireExistingTitlePanel(Transform panel)

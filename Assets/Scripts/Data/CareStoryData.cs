@@ -127,7 +127,8 @@ namespace CARE.Story
         {
             new DialogueLine("DOCTOR SAWIT MAN", "Kalian belum memahami seluruh ceritanya. Ini belum berakhir.", "sawit_man", "", "Environtment/scene_sawit_man"),
             new DialogueLine("PENJELAJAH", "Kami akan terus menelusuri petunjuk yang ada.", "penjelajah", "", "Environtment/scene_sawit_man"),
-            new DialogueLine("NARATOR", "Doctor Sawit Man mundur. Petunjuk yang terkumpul membuka jalan untuk melanjutkan investigasi.", "none", "", "Environtment/scene_sawit_man")
+            new DialogueLine("NARATOR", "Doctor Sawit Man mundur. Petunjuk yang terkumpul membuka jalan untuk melanjutkan investigasi.", "none", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("NARATOR", "Misi pada Stage ini telah selesai. Lanjutkan perjalanan untuk memulihkan kawasan berikutnya.", "none", "", "Environtment/scene_sawit_man")
         };
 
         public static List<DialogueLine> BossStage2_Intro = new List<DialogueLine>()
@@ -144,7 +145,8 @@ namespace CARE.Story
         {
             new DialogueLine("DOCTOR SAWIT MAN", "Kalian semakin dekat, tetapi masih ada satu bagian yang belum kalian lihat.", "sawit_man", "", "Environtment/scene_sawit_man"),
             new DialogueLine("PENJELAJAH", "Kalau begitu, kami akan mencari bagian yang belum ditemukan itu.", "penjelajah", "", "Environtment/scene_sawit_man"),
-            new DialogueLine("NARATOR", "Doctor Sawit Man kembali mundur. Petunjuk yang diperoleh mengarah pada area pemulihan hutan.", "none", "", "Environtment/scene_sawit_man")
+            new DialogueLine("NARATOR", "Doctor Sawit Man kembali mundur. Petunjuk yang diperoleh mengarah pada area pemulihan hutan.", "none", "", "Environtment/scene_sawit_man"),
+            new DialogueLine("NARATOR", "Misi pada Stage ini telah selesai. Lanjutkan perjalanan untuk memulihkan kawasan berikutnya.", "none", "", "Environtment/scene_sawit_man")
         };
 
         public static List<DialogueLine> BossStage3_Intro = new List<DialogueLine>()
@@ -163,7 +165,8 @@ namespace CARE.Story
             new DialogueLine("DOCTOR SAWIT MAN", "Aku mengakui bahwa tindakanku telah menyebabkan kerusakan. Aku harus bertanggung jawab atas keputusan itu.", "sawit_man", "", "Environtment/scene_victory"),
             new DialogueLine("PENJELAJAH", "Mengakui kesalahan adalah langkah awal. Pemulihan hutan membutuhkan tindakan nyata dan pengawasan.", "penjelajah", "", "Environtment/scene_victory"),
             new DialogueLine("DOCTOR SAWIT MAN", "Aku bersedia menyerahkan informasi yang kuberikan dan mendukung proses pemulihan sesuai aturan yang berlaku.", "sawit_man", "", "Environtment/scene_victory"),
-            new DialogueLine("NARATOR", "Konfrontasi berakhir. Namun, pekerjaan untuk memulihkan hutan dan melindungi satwa masih harus dilanjutkan.", "none", "", "Environtment/scene_victory")
+            new DialogueLine("NARATOR", "Konfrontasi berakhir. Namun, pekerjaan untuk memulihkan hutan dan melindungi satwa masih harus dilanjutkan.", "none", "", "Environtment/scene_victory"),
+            new DialogueLine("NARATOR", "Misi pada Stage ini telah selesai. Lanjutkan perjalanan untuk memulihkan kawasan berikutnya.", "none", "", "Environtment/scene_victory")
         };
 
         // ----------------- ENDING SCENES -----------------

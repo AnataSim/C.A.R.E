@@ -1588,18 +1588,25 @@ namespace CARE.Gameplay
                 }
             }
 
-            yield return new WaitForSeconds(0.4f);
+            // Simpan perolehan EXP dan level ke Local Storage
+            if (CARE.Data.CareSaveManager.Instance != null)
+            {
+                CARE.Data.CareSaveManager.Instance.AddExp(Score);
+                CARE.Data.CareSaveManager.Instance.MarkLevelCompleted(currentStageNumber, currentLevelNumber);
+            }
 
-            if (victoryModal != null)
+            yield return new WaitForSeconds(0.6f);
+
+            // "jika permainan selesai maka muncul lagi scene percakapan dr sawit gitu"
+            if (onCombatCompleteCallback != null)
+            {
+                if (combatPanel != null) combatPanel.SetActive(false);
+                if (victoryModal != null) victoryModal.SetActive(false);
+                onCombatCompleteCallback.Invoke();
+            }
+            else if (victoryModal != null)
             {
                 victoryModal.SetActive(true);
-
-                // Simpan perolehan EXP dan level ke Local Storage
-                if (CARE.Data.CareSaveManager.Instance != null)
-                {
-                    CARE.Data.CareSaveManager.Instance.AddExp(Score);
-                    CARE.Data.CareSaveManager.Instance.MarkLevelCompleted(currentStageNumber, currentLevelNumber);
-                }
 
                 if (victoryStatsText != null)
                 {
