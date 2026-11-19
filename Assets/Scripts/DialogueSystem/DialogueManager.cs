@@ -31,6 +31,12 @@ namespace CARE.UI
         [SerializeField] private AudioClip typewriterSFX;
         [SerializeField] private AudioSource audioSource;
 
+        [Header("Character Voice / Speech Tones")]
+        [SerializeField] private AudioClip narratorMcTone;
+        [SerializeField] private AudioClip drSawitNormalTone;
+        [SerializeField] private AudioClip drSawitAngryTone;
+        [SerializeField] private AudioSource voiceAudioSource;
+
         private List<DialogueLine> currentDialogueLines = new List<DialogueLine>();
         private int currentLineIndex = 0;
         private bool isTyping = false;
@@ -47,6 +53,7 @@ namespace CARE.UI
             }
             Instance = this;
 
+            // Audio source for clicks / SFX
             if (audioSource == null)
             {
                 audioSource = GetComponent<AudioSource>();
@@ -55,11 +62,45 @@ namespace CARE.UI
                 audioSource.spatialBlend = 0f;
             }
 
-            // Auto-load resources if not assigned
+            // Audio source dedicated to character voice tones
+            if (voiceAudioSource == null)
+            {
+                AudioSource[] sources = GetComponents<AudioSource>();
+                if (sources.Length > 1)
+                {
+                    voiceAudioSource = sources[1];
+                }
+                else
+                {
+                    voiceAudioSource = gameObject.AddComponent<AudioSource>();
+                }
+                voiceAudioSource.playOnAwake = false;
+                voiceAudioSource.spatialBlend = 0f;
+                voiceAudioSource.loop = true;
+            }
+
+            // Auto-load portraits if not assigned
             if (penjelajahPortrait == null) penjelajahPortrait = Resources.Load<Sprite>("TemporaryAssets/Characters/penjelajah_portrait");
             if (sawitManPortrait == null) sawitManPortrait = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_portrait");
             if (monyetPortrait == null) monyetPortrait = Resources.Load<Sprite>("TemporaryAssets/Characters/monyet_terdampak");
             if (typewriterSFX == null) typewriterSFX = Resources.Load<AudioClip>("Audio/sfx_click");
+
+            // Auto-load voice speech tone clips from Resources/Audio/tone/
+            if (narratorMcTone == null)
+            {
+                narratorMcTone = Resources.Load<AudioClip>("Audio/tone/narrator_mc_tone");
+                if (narratorMcTone == null) narratorMcTone = Resources.Load<AudioClip>("Audio/tone/Narrator + MC Tone");
+            }
+            if (drSawitNormalTone == null)
+            {
+                drSawitNormalTone = Resources.Load<AudioClip>("Audio/tone/dr_sawit_normal_tone");
+                if (drSawitNormalTone == null) drSawitNormalTone = Resources.Load<AudioClip>("Audio/tone/Normal Tone - Dr Sawit man");
+            }
+            if (drSawitAngryTone == null)
+            {
+                drSawitAngryTone = Resources.Load<AudioClip>("Audio/tone/dr_sawit_angry_tone");
+                if (drSawitAngryTone == null) drSawitAngryTone = Resources.Load<AudioClip>("Audio/tone/Angry Tone - Dr Sawit Man");
+            }
 
             if (continueButton != null)
             {
@@ -183,31 +224,158 @@ namespace CARE.UI
             if (continueIndicator != null) continueIndicator.SetActive(false);
 
             if (typingCoroutine != null) StopCoroutine(typingCoroutine);
-            typingCoroutine = StartCoroutine(TypeText(line.text));
+            typingCoroutine = StartCoroutine(TypeText(line));
         }
 
-        private IEnumerator TypeText(string text)
+        /// <summary>
+        /// Menentukan AudioClip voice tone yang cocok untuk baris percakapan saat ini.
+        /// Dr. Sawit Man: menggunakan Normal Tone diawal, dan Angry Tone saat marah / konfrontasi.
+        /// Narrator & Penjelajah (MC): berbagi tone yang sama karena MC mengingat memori sebagai narator.
+        /// </summary>
+        private AudioClip GetToneForLine(DialogueLine line)
+        {
+            if (line == null) return narratorMcTone;
+
+            string speaker = (line.speaker ?? "").ToUpperInvariant();
+            string portrait = (line.portraitKey ?? "").ToLowerInvariant();
+
+            bool isSawitMan = speaker.Contains("SAWIT") || speaker.Contains("DOCTOR") || portrait == "sawit_man";
+
+            if (isSawitMan)
+            {
+                if (IsAngryTone(line))
+                {
+                    return drSawitAngryTone != null ? drSawitAngryTone : drSawitNormalTone;
+                }
+                return drSawitNormalTone != null ? drSawitNormalTone : narratorMcTone;
+            }
+
+            // Narrator dan Penjelajah (MC) menggunakan Narrator + MC tone
+            return narratorMcTone;
+        }
+
+        /// <summary>
+        /// Mendeteksi apakah baris percakapan Dr. Sawit Man bernada marah/emosi tinggi.
+        /// </summary>
+        private bool IsAngryTone(DialogueLine line)
+        {
+            if (line == null) return false;
+
+            if (!string.IsNullOrEmpty(line.sfxCue) &&
+                (line.sfxCue.IndexOf("angry", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 line.sfxCue.IndexOf("rage", StringComparison.OrdinalIgnoreCase) >= 0))
+            {
+                return true;
+            }
+
+            string txt = (line.text ?? "").ToUpperInvariant();
+
+            // Kata kunci atau tanda baca konfrontasi marah
+            if (txt.Contains("!") ||
+                txt.Contains("MEMPERINGATKAN") ||
+                txt.Contains("MENGHADANG") ||
+                txt.Contains("GERAM") ||
+                txt.Contains("MARAH") ||
+                txt.Contains("HENTIKAN") ||
+                txt.Contains("LAWAN") ||
+                txt.Contains("HANCUR"))
+            {
+                return true;
+            }
+
+            // Konfrontasi stage lanjut (Stage 2 atau 3) bernada tegang/marah kecuali dialog mengaku kalah
+            if (CARE.GameFlowManager.Instance != null && CARE.GameFlowManager.Instance.currentStage >= 2)
+            {
+                if (!txt.Contains("MENGAKUI") && !txt.Contains("BERSEDIA MENYERAHKAN"))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void StartVoiceTone(AudioClip toneClip)
+        {
+            if (voiceAudioSource == null || toneClip == null) return;
+
+            voiceAudioSource.clip = toneClip;
+            float clipLen = toneClip.length;
+
+            // Random pick offset agar suara percakapan dinamis dan tidak selalu mulai dari detik ke-0
+            try
+            {
+                if (clipLen > 4f)
+                {
+                    float maxStart = Mathf.Max(0f, clipLen - 4f);
+                    voiceAudioSource.time = UnityEngine.Random.Range(0f, maxStart);
+                }
+                else
+                {
+                    voiceAudioSource.time = 0f;
+                }
+            }
+            catch (Exception)
+            {
+                // Fallback jika platform membatasi seek time sebelum decompress
+            }
+
+            voiceAudioSource.volume = 0.85f;
+            voiceAudioSource.loop = true;
+            voiceAudioSource.Play();
+        }
+
+        private void StopVoiceTone()
+        {
+            if (voiceAudioSource != null && voiceAudioSource.isPlaying)
+            {
+                voiceAudioSource.Stop();
+            }
+        }
+
+        private IEnumerator TypeText(DialogueLine line)
         {
             isTyping = true;
             if (dialogueBodyText != null) dialogueBodyText.text = "";
 
+            AudioClip toneClip = GetToneForLine(line);
+            StartVoiceTone(toneClip);
+
+            string text = line != null ? line.text : "";
             for (int i = 0; i < text.Length; i++)
             {
+                char c = text[i];
                 if (dialogueBodyText != null)
                 {
-                    dialogueBodyText.text += text[i];
+                    dialogueBodyText.text += c;
                 }
 
-                // Bunyikan SFX ketikan sesekali agar nyaman didengar
-                if (i % 2 == 0 && typewriterSFX != null && audioSource != null)
+                // Jeda alami percakapan saat bertemu tanda baca
+                if (c == '.' || c == ',' || c == '!' || c == '?' || c == ':')
                 {
-                    audioSource.PlayOneShot(typewriterSFX, 0.4f);
+                    if (voiceAudioSource != null && voiceAudioSource.isPlaying)
+                    {
+                        voiceAudioSource.Pause();
+                    }
+                    yield return new WaitForSecondsRealtime(typingSpeed * 2.5f);
+                    if (isTyping && voiceAudioSource != null && voiceAudioSource.clip != null)
+                    {
+                        voiceAudioSource.UnPause();
+                    }
                 }
-
-                yield return new WaitForSecondsRealtime(typingSpeed);
+                else
+                {
+                    // Fallback SFX ketikan halus jika tone audio belum tersedia
+                    if (toneClip == null && i % 2 == 0 && typewriterSFX != null && audioSource != null)
+                    {
+                        audioSource.PlayOneShot(typewriterSFX, 0.4f);
+                    }
+                    yield return new WaitForSecondsRealtime(typingSpeed);
+                }
             }
 
             isTyping = false;
+            StopVoiceTone();
             if (continueIndicator != null) continueIndicator.SetActive(true);
         }
 
@@ -215,15 +383,17 @@ namespace CARE.UI
         {
             if (isTyping)
             {
-                // Jika sedang mengetik, tampilkan seluruh teks sekaligus
+                // Jika sedang mengetik, tampilkan seluruh teks sekaligus dan hentikan tone suara
                 if (typingCoroutine != null) StopCoroutine(typingCoroutine);
                 if (dialogueBodyText != null) dialogueBodyText.text = fullCurrentText;
                 isTyping = false;
+                StopVoiceTone();
                 if (continueIndicator != null) continueIndicator.SetActive(true);
             }
             else
             {
                 // Pindah ke kalimat dialog berikutnya
+                StopVoiceTone();
                 currentLineIndex++;
                 DisplayCurrentLine();
             }
@@ -231,8 +401,26 @@ namespace CARE.UI
 
         private void EndDialogue()
         {
+            StopVoiceTone();
+            if (typingCoroutine != null)
+            {
+                StopCoroutine(typingCoroutine);
+                typingCoroutine = null;
+            }
+            isTyping = false;
             if (dialoguePanel != null) dialoguePanel.SetActive(false);
             onCompleteCallback?.Invoke();
+        }
+
+        private void OnDisable()
+        {
+            StopVoiceTone();
+            if (typingCoroutine != null)
+            {
+                StopCoroutine(typingCoroutine);
+                typingCoroutine = null;
+            }
+            isTyping = false;
         }
 
         private void Update()
@@ -248,4 +436,3 @@ namespace CARE.UI
         }
     }
 }
-
