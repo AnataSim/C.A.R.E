@@ -689,18 +689,18 @@ namespace CARE.Core
             exitRT.anchorMax = new Vector2(1f, 0.5f);
             exitRT.pivot = new Vector2(1f, 0.5f);
 
-            Text comboText = CreateUIText("ComboBanner", panel.transform, "⚡ COMBO x2!", 32, new Color(1f, 0.92f, 0.2f), FontStyle.Bold, new Vector2(0, 410), new Vector2(500, 50));
+            Text comboText = CreateUIText("ComboBanner", panel.transform, "⚡ COMBO x2!", 32, new Color(1f, 0.92f, 0.2f), FontStyle.Bold, new Vector2(0, 480), new Vector2(500, 50));
             comboText.gameObject.SetActive(false);
 
             // 2. Upper Battlefield Area (Target / Enemy Section)
             // Enemy Name Tag
-            Text enemyNameText = CreateUIText("EnemyName", panel.transform, "DOCTOR SAWIT MAN", 22, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 375), new Vector2(600, 36));
+            Text enemyNameText = CreateUIText("EnemyName", panel.transform, "DOCTOR SAWIT MAN", 22, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 450), new Vector2(700, 36));
 
-            // Enemy HP Bar Container
+            // Enemy HP Bar Container (Wider bar for wider screen: 780x28)
             GameObject hpBarObj = CreateUIBox("HPBarContainer", panel.transform, new Color(0.12f, 0.05f, 0.05f, 0.95f));
             RectTransform hpBarRT = hpBarObj.GetComponent<RectTransform>();
-            hpBarRT.anchoredPosition = new Vector2(0, 340);
-            hpBarRT.sizeDelta = new Vector2(520, 28);
+            hpBarRT.anchoredPosition = new Vector2(0, 415);
+            hpBarRT.sizeDelta = new Vector2(780, 28);
 
             // HP Red Background Bar (Revealed when HP decreases!)
             GameObject hpBgObj = new GameObject("HPBg", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -734,29 +734,29 @@ namespace CARE.Core
             // HP Text
             Text hpText = CreateUIText("HPText", hpBarObj.transform, "HP: 500 / 500 (100%)", 17, Color.white, FontStyle.Bold, Vector2.zero, new Vector2(500, 26));
 
-            // Enemy Character Sprite
+            // Enemy Character Sprite (Moving Boss with Hitbox)
             GameObject bossArtObj = new GameObject("BossTargetArt");
             bossArtObj.transform.SetParent(panel.transform, false);
             RectTransform artRT = bossArtObj.AddComponent<RectTransform>();
-            artRT.sizeDelta = new Vector2(340, 340);
-            artRT.anchoredPosition = new Vector2(0, 195);
+            artRT.sizeDelta = new Vector2(240, 240);
+            artRT.anchoredPosition = new Vector2(0, 220);
             Image enemyImg = bossArtObj.AddComponent<Image>();
             enemyImg.sprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_idle");
             if (enemyImg.sprite == null) enemyImg.sprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man");
             enemyImg.preserveAspect = true;
             enemyImg.raycastTarget = false;
 
-            // 3. Lower Match-3 Board Area
+            // 3. Lower Match-3 Board Area (15x6 Grid)
             GameObject boardFrameObj = CreateUIBox("BoardFrame", panel.transform, new Color(0.06f, 0.12f, 0.09f, 0.96f));
             RectTransform boardFrameRT = boardFrameObj.GetComponent<RectTransform>();
-            boardFrameRT.anchoredPosition = new Vector2(0, -225);
-            boardFrameRT.sizeDelta = new Vector2(644, 556);
+            boardFrameRT.anchoredPosition = new Vector2(0, -250);
+            boardFrameRT.sizeDelta = new Vector2(1260, 520);
 
-            // Grid Container (Inside Board Frame)
+            // Grid Container (Inside Board Frame: 15 columns x 76px + 14 * 6px = 1224px width, 6 rows * 76px + 5 * 6px = 486px height)
             GameObject gridContainerObj = new GameObject("GridContainer", typeof(RectTransform));
             gridContainerObj.transform.SetParent(boardFrameObj.transform, false);
             RectTransform gridRT = gridContainerObj.GetComponent<RectTransform>();
-            gridRT.sizeDelta = new Vector2(616, 528);
+            gridRT.sizeDelta = new Vector2(1224, 486);
             gridRT.anchoredPosition = Vector2.zero;
 
             // Pre-spawn cell slot backings for clear visual grid layout
@@ -770,7 +770,7 @@ namespace CARE.Core
                     sRT.sizeDelta = new Vector2(Match3CombatManager.TILE_SIZE, Match3CombatManager.TILE_SIZE);
                     sRT.anchoredPosition = Match3CombatManager.Instance != null ?
                         Match3CombatManager.Instance.CalculateTilePosition(x, y) :
-                        new Vector2(-264f + x * 88f, -220f + y * 88f);
+                        new Vector2(-574f + x * 82f, -205f + y * 82f);
                     Image slotImg = slotObj.GetComponent<Image>();
                     slotImg.color = new Color(0.12f, 0.2f, 0.16f, 0.72f);
                     slotImg.raycastTarget = false;

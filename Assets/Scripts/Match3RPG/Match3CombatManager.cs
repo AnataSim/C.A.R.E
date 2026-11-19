@@ -29,18 +29,36 @@ namespace CARE.Gameplay
 
     /// <summary>
     /// Core Game Engine for Match-3 RPG Combat (Candy Crush + Dungeon Puzzles).
-    /// When tiles are combined, they fire projectiles upwards to attack the enemy/target.
-    /// Includes full HP bar mechanics, combos, cascades, and victory/defeat states.
+    /// Grid format: 15x6 (15 Columns x 6 Rows).
+    /// Boss moves horizontally across the maximum grid width (patrolling back and forth).
+    /// Boss has a real-time Hitbox.
+    /// When player matches blocks, rockets launch straight UPWARDS.
+    /// If a rocket collides with the boss hitbox, it deals damage. Otherwise, it misses!
     /// </summary>
     public class Match3CombatManager : MonoBehaviour
     {
         public static Match3CombatManager Instance { get; private set; }
 
-        [Header("Board Configuration")]
-        public const int COLUMNS = 7;
+        [Header("Board Configuration (15x6 Grid)")]
+        public const int COLUMNS = 15;
         public const int ROWS = 6;
-        public const float TILE_SIZE = 82f;
+        public const float TILE_SIZE = 76f;
         public const float TILE_SPACING = 6f;
+
+        [Header("Boss Patrol & Hitbox Settings")]
+        public float bossPatrolSpeed = 220f;
+        public float BossHitboxWidth = 200f;
+        public float BossHitboxHeight = 220f;
+        public float BossHitboxTop => bossBaseY + BossHitboxHeight * 0.5f;
+        public float BossHitboxBottom => bossBaseY - BossHitboxHeight * 0.5f;
+
+        private float bossMinX = -574f;
+        private float bossMaxX = 574f;
+        private int bossMoveDirection = -1; // -1: right-to-left, 1: left-to-right
+        private float bossCurrentX = 574f;
+        private float bossBaseY = 220f;
+        private bool isBossMoving = true;
+        private GameObject hitboxIndicatorObj;
 
         // Runtime State
         public bool CanPlayerMove { get; private set; } = false;
@@ -138,13 +156,126 @@ namespace CARE.Gameplay
 
         private void Update()
         {
-            // Idle bobbing animation for enemy
+            // Boss Patrol Horizontal Movement (Repeat right-to-left and left-to-right across max grid width)
             if (enemyRect != null && !isEnemyDefeated && combatPanel != null && combatPanel.activeSelf)
             {
-                float bobOffset = Mathf.Sin(Time.time * 3f) * 6f;
-                enemyRect.anchoredPosition = new Vector2(enemyBasePos.x, enemyBasePos.y + bobOffset);
+                if (isBossMoving)
+                {
+                    bossCurrentX += bossMoveDirection * bossPatrolSpeed * Time.deltaTime;
+
+                    if (bossCurrentX <= bossMinX)
+                    {
+                        bossCurrentX = bossMinX;
+                        bossMoveDirection = 1; // Turn right
+                    }
+                    else if (bossCurrentX >= bossMaxX)
+                    {
+                        bossCurrentX = bossMaxX;
+                        bossMoveDirection = -1; // Turn left
+                    }
+                }
+
+                // Smooth walking bob animation
+                float walkBob = Mathf.Abs(Mathf.Sin(Time.time * 6f)) * 8f;
+                enemyRect.anchoredPosition = new Vector2(bossCurrentX, bossBaseY + walkBob);
+
+                // Doctor Sawit Man naturally faces left.
+                // When moving left (direction = -1): scale.x = 1.
+                // When moving right (direction = 1): scale.x = -1 (flipped).
+                float targetFacing = bossMoveDirection > 0 ? -1f : 1f;
+                Vector3 currentScale = enemyRect.localScale;
+                currentScale.x = targetFacing;
+                enemyRect.localScale = currentScale;
             }
         }
+
+        #region Hitbox & Collision Detection
+
+        /// <summary>
+        /// Checks if a projectile overlaps with the moving Boss Hitbox.
+        /// </summary>
+        public bool CheckEnemyHit(Vector2 projPos, float radius = 28f)
+        {
+            if (isEnemyDefeated || enemyRect == null || combatPanel == null || !combatPanel.activeSelf)
+                return false;
+
+            float bossX = enemyRect.anchoredPosition.x;
+            float bossY = enemyRect.anchoredPosition.y;
+
+            float halfW = (BossHitboxWidth * 0.5f) + radius;
+            float halfH = (BossHitboxHeight * 0.5f) + radius;
+
+            bool xOverlap = Mathf.Abs(projPos.x - bossX) <= halfW;
+            bool yOverlap = Mathf.Abs(projPos.y - bossY) <= halfH;
+
+            return xOverlap && yOverlap;
+        }
+
+        private void CreateHitboxIndicator()
+        {
+            if (enemyRect == null) return;
+
+            Transform existing = enemyRect.transform.Find("HitboxTargetFrame");
+            if (existing != null) Destroy(existing.gameObject);
+
+            hitboxIndicatorObj = new GameObject("HitboxTargetFrame", typeof(RectTransform));
+            hitboxIndicatorObj.transform.SetParent(enemyRect.transform, false);
+            RectTransform frt = hitboxIndicatorObj.GetComponent<RectTransform>();
+            frt.sizeDelta = new Vector2(BossHitboxWidth, BossHitboxHeight);
+            frt.anchoredPosition = Vector2.zero;
+
+            Sprite white = GetWhiteSprite();
+
+            // 1. Left Target Bracket [
+            GameObject leftBracket = new GameObject("LeftBracket", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            leftBracket.transform.SetParent(hitboxIndicatorObj.transform, false);
+            RectTransform lrt = leftBracket.GetComponent<RectTransform>();
+            lrt.sizeDelta = new Vector2(6f, BossHitboxHeight * 0.7f);
+            lrt.anchoredPosition = new Vector2(-BossHitboxWidth * 0.5f, 0);
+            Image lImg = leftBracket.GetComponent<Image>();
+            lImg.sprite = white;
+            lImg.color = new Color(1f, 0.3f, 0.3f, 0.7f);
+            lImg.raycastTarget = false;
+
+            // 2. Right Target Bracket ]
+            GameObject rightBracket = new GameObject("RightBracket", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            rightBracket.transform.SetParent(hitboxIndicatorObj.transform, false);
+            RectTransform rrt = rightBracket.GetComponent<RectTransform>();
+            rrt.sizeDelta = new Vector2(6f, BossHitboxHeight * 0.7f);
+            rrt.anchoredPosition = new Vector2(BossHitboxWidth * 0.5f, 0);
+            Image rImg = rightBracket.GetComponent<Image>();
+            rImg.sprite = white;
+            rImg.color = new Color(1f, 0.3f, 0.3f, 0.7f);
+            rImg.raycastTarget = false;
+
+            // 3. Ground Target Zone Ring at feet
+            GameObject ringObj = new GameObject("FootTargetZone", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            ringObj.transform.SetParent(hitboxIndicatorObj.transform, false);
+            RectTransform ringRT = ringObj.GetComponent<RectTransform>();
+            ringRT.sizeDelta = new Vector2(BossHitboxWidth, 34f);
+            ringRT.anchoredPosition = new Vector2(0, -BossHitboxHeight * 0.5f + 16f);
+            Image ringImg = ringObj.GetComponent<Image>();
+            ringImg.sprite = white;
+            ringImg.color = new Color(1f, 0.22f, 0.22f, 0.42f);
+            ringImg.raycastTarget = false;
+
+            // 4. Target Label
+            GameObject txtObj = new GameObject("TargetLabel", typeof(RectTransform));
+            txtObj.transform.SetParent(hitboxIndicatorObj.transform, false);
+            RectTransform trt = txtObj.GetComponent<RectTransform>();
+            trt.sizeDelta = new Vector2(BossHitboxWidth, 24f);
+            trt.anchoredPosition = new Vector2(0, -BossHitboxHeight * 0.5f + 16f);
+            Text lbl = txtObj.AddComponent<Text>();
+            lbl.font = GetGameFont();
+            lbl.text = "🎯 TARGET";
+            lbl.fontSize = 14;
+            lbl.fontStyle = FontStyle.Bold;
+            lbl.alignment = TextAnchor.MiddleCenter;
+            lbl.color = new Color(1f, 0.95f, 0.5f, 0.85f);
+            lbl.raycastTarget = false;
+        }
+
+        #endregion
 
         #region Setup UI Wiring
 
@@ -184,7 +315,11 @@ namespace CARE.Gameplay
             if (enemyImage != null)
             {
                 enemyRect = enemyImage.GetComponent<RectTransform>();
-                if (enemyRect != null) enemyBasePos = enemyRect.anchoredPosition;
+                if (enemyRect != null)
+                {
+                    enemyBasePos = enemyRect.anchoredPosition;
+                    bossBaseY = enemyBasePos.y;
+                }
             }
             hpBarFill = hpFill;
             hpText = hpTxt;
@@ -244,8 +379,7 @@ namespace CARE.Gameplay
         #region Start Combat
 
         /// <summary>
-        /// Starts a Match-3 RPG Combat level against the enemy target.
-        /// Reuses the existing Criminal Case item assets as the puzzle combine tiles!
+        /// Starts Match-3 RPG Combat (15x6 Grid) with moving Boss and vertical Rocket attacks!
         /// </summary>
         public void StartCombat(int stage, int level, string locationName, Action onComplete)
         {
@@ -259,9 +393,19 @@ namespace CARE.Gameplay
             if (defeatModal != null) defeatModal.SetActive(false);
 
             isEnemyDefeated = false;
+            isBossMoving = true;
             Score = 0;
             CurrentCombo = 1;
             MaxComboReached = 1;
+
+            // Configure Boss Patrol bounds based on 15x6 grid width
+            bossMinX = CalculateTilePosition(0, 0).x;
+            bossMaxX = CalculateTilePosition(COLUMNS - 1, 0).x;
+            bossCurrentX = bossMaxX; // Starts on the right side
+            bossMoveDirection = -1;  // Moves right-to-left first, then reverses!
+
+            // Create target indicator
+            CreateHitboxIndicator();
 
             // Configure Target HP & Moves based on stage & level
             SetupLevelBalancing(stage, level);
@@ -282,41 +426,42 @@ namespace CARE.Gameplay
                     CareAudioManager.Instance.PlayInvestigationBGM();
             }
 
-            // Build Match-3 Grid
+            // Build Match-3 Grid (15x6)
             StartCoroutine(InitializeBoardRoutine());
         }
 
         private void SetupLevelBalancing(int stage, int level)
         {
+            // Balanced for 15x6 grid with rocket timing mechanics
             if (stage == 1 && level == 1)
             {
-                TargetMaxHP = 500;
-                MovesRemaining = 24;
+                TargetMaxHP = 450;
+                MovesRemaining = 25;
             }
             else if (stage == 1 && level == 2)
             {
-                TargetMaxHP = 750;
-                MovesRemaining = 22;
+                TargetMaxHP = 650;
+                MovesRemaining = 24;
             }
             else if (stage == 2 && level == 1)
             {
-                TargetMaxHP = 900;
-                MovesRemaining = 22;
+                TargetMaxHP = 800;
+                MovesRemaining = 24;
             }
             else if (stage == 2 && level == 2)
             {
-                TargetMaxHP = 1200;
-                MovesRemaining = 20;
+                TargetMaxHP = 1050;
+                MovesRemaining = 22;
             }
             else if (stage == 3 && level == 1)
             {
-                TargetMaxHP = 1500;
-                MovesRemaining = 20;
+                TargetMaxHP = 1300;
+                MovesRemaining = 22;
             }
             else
             {
-                TargetMaxHP = 2200;
-                MovesRemaining = 25;
+                TargetMaxHP = 1750;
+                MovesRemaining = 26;
             }
 
             TargetCurrentHP = TargetMaxHP;
@@ -340,11 +485,6 @@ namespace CARE.Gameplay
             currentTileTypes.Clear();
 
             // 5 Candy / Gem Placeholder Element Types with high-contrast, juicy Candy Crush colors:
-            // 0: Red Ruby (Candy Heart/Apple) - Symbol: "🍎"
-            // 1: Blue Sapphire (Water Drop) - Symbol: "💧"
-            // 2: Green Emerald (Leaf) - Symbol: "🌿"
-            // 3: Yellow Topaz (Star) - Symbol: "⭐"
-            // 4: Purple Amethyst (Diamond) - Symbol: "💎"
             string[] candySymbols = new string[] { "🍎", "💧", "🌿", "⭐", "💎" };
             Color[] candyColors = new Color[]
             {
@@ -372,7 +512,6 @@ namespace CARE.Gameplay
                     Sprite s = Resources.Load<Sprite>(folder + stageItems[i].spriteName);
                     if (s == null)
                     {
-                        // Fallback to Stage 1 Level 1 items
                         s = Resources.Load<Sprite>("TemporaryAssets/HiddenObjects/Stage1_Level1/" + stageItems[i].spriteName);
                     }
                     currentTileTypes.Add(new Match3ItemDef(i, stageItems[i].itemName, candySymbols[i], s, candyColors[i]));
@@ -380,7 +519,6 @@ namespace CARE.Gameplay
             }
             else
             {
-                // Fallback default set from Stage 1 Level 1
                 string[] defaultSprites = new string[] { "kotak_p3k", "botol_air", "kain_bersih", "peta_kawasan", "jejak_kaki_satwa" };
                 string[] defaultNames = new string[] { "Kotak P3K", "Botol Air", "Kain Bersih", "Peta Kawasan", "Jejak Satwa" };
 
@@ -416,7 +554,7 @@ namespace CARE.Gameplay
 
             yield return null;
 
-            // Fill grid with random types, guaranteeing no initial 3-matches
+            // Fill 15x6 grid with random types, guaranteeing no initial 3-matches
             for (int x = 0; x < COLUMNS; x++)
             {
                 for (int y = 0; y < ROWS; y++)
@@ -456,7 +594,7 @@ namespace CARE.Gameplay
         private Match3Tile SpawnTileAt(int x, int y, int typeId, bool animateDrop = true)
         {
             Vector2 targetPos = CalculateTilePosition(x, y);
-            Vector2 startPos = animateDrop ? new Vector2(targetPos.x, targetPos.y + 400f) : targetPos;
+            Vector2 startPos = animateDrop ? new Vector2(targetPos.x, targetPos.y + 420f) : targetPos;
 
             Match3ItemDef def = currentTileTypes[typeId];
             Match3Tile tile = Match3Tile.Spawn(boardContainer, x, y, typeId, def.sprite, def.itemName, def.symbol, def.themeColor, startPos, new Vector2(TILE_SIZE, TILE_SIZE));
@@ -473,7 +611,6 @@ namespace CARE.Gameplay
 
         public Vector2 CalculateTilePosition(int x, int y)
         {
-            // Center grid around (0, 0) of boardContainer
             float totalWidth = COLUMNS * TILE_SIZE + (COLUMNS - 1) * TILE_SPACING;
             float totalHeight = ROWS * TILE_SIZE + (ROWS - 1) * TILE_SPACING;
 
@@ -507,7 +644,6 @@ namespace CARE.Gameplay
             }
             else
             {
-                // Check if adjacent
                 int dx = Mathf.Abs(selectedTile.GridX - tile.GridX);
                 int dy = Mathf.Abs(selectedTile.GridY - tile.GridY);
 
@@ -533,7 +669,6 @@ namespace CARE.Gameplay
         {
             if (!CanPlayerMove) return;
 
-            // Boundary validation
             if (x1 < 0 || x1 >= COLUMNS || y1 < 0 || y1 >= ROWS) return;
             if (x2 < 0 || x2 >= COLUMNS || y2 < 0 || y2 >= ROWS) return;
 
@@ -582,7 +717,6 @@ namespace CARE.Gameplay
 
             if (matches.Count > 0)
             {
-                // Valid move!
                 MovesRemaining--;
                 CurrentCombo = 1;
                 UpdateHeaderUI();
@@ -631,7 +765,7 @@ namespace CARE.Gameplay
         {
             HashSet<Match3Tile> matchedSet = new HashSet<Match3Tile>();
 
-            // 1. Horizontal Check
+            // 1. Horizontal Check (across 15 columns)
             for (int y = 0; y < ROWS; y++)
             {
                 int matchCount = 1;
@@ -655,7 +789,7 @@ namespace CARE.Gameplay
                 }
             }
 
-            // 2. Vertical Check
+            // 2. Vertical Check (across 6 rows)
             for (int x = 0; x < COLUMNS; x++)
             {
                 int matchCount = 1;
@@ -686,7 +820,6 @@ namespace CARE.Gameplay
         {
             while (matchedTiles != null && matchedTiles.Count > 0)
             {
-                // Play match chime
                 if (CurrentCombo > 1)
                 {
                     PlaySound(sfxBonus, 0.85f);
@@ -700,8 +833,8 @@ namespace CARE.Gameplay
 
                 if (CurrentCombo > MaxComboReached) MaxComboReached = CurrentCombo;
 
-                // Base damage: 25 per tile, multiplied by combo
-                int baseTileDamage = 25;
+                // Base damage per rocket on hit: 40, multiplied by combo
+                int baseTileDamage = 40;
                 float comboMultiplier = 1f + (CurrentCombo - 1) * 0.5f;
                 int damagePerTile = Mathf.RoundToInt(baseTileDamage * comboMultiplier);
 
@@ -720,36 +853,32 @@ namespace CARE.Gameplay
 
                 Transform projParent = projectileLayer != null ? projectileLayer : combatPanel.transform;
 
-                // Target center in Canvas coordinate space
-                Vector2 targetEnemyPos = (enemyImage != null) ?
-                    (Vector2)projParent.InverseTransformPoint(enemyImage.transform.position) :
-                    new Vector2(0, 240);
-
-                // Launch Attack Projectiles from combined items straight to the enemy above!
+                // Launch Attack Rockets straight upwards from the matched tiles!
                 foreach (var tile in matchedTiles)
                 {
                     if (tile == null) continue;
 
-                    Vector2 tileWorldPos = (Vector2)projParent.InverseTransformPoint(tile.transform.position);
+                    Vector2 tilePosInProjLayer = (Vector2)projParent.InverseTransformPoint(tile.transform.position);
 
-                    Match3Projectile.Spawn(
+                    PlaySound(sfxWhoosh, 0.65f);
+
+                    Match3Projectile.SpawnRocket(
                         projParent,
-                        tileWorldPos,
-                        targetEnemyPos,
+                        tilePosInProjLayer,
                         tile.ItemSprite,
                         tile.Symbol,
                         tile.ThemeColor,
                         damagePerTile,
                         CurrentCombo,
-                        OnEnemyHit
+                        OnEnemyHit,
+                        OnEnemyMiss
                     );
 
-                    // Clear from grid array
                     grid[tile.GridX, tile.GridY] = null;
                     tile.AnimateMatchAndDestroy(0.24f);
                 }
 
-                yield return new WaitForSeconds(0.28f);
+                yield return new WaitForSeconds(0.26f);
 
                 // Gravity: drop tiles down
                 yield return ApplyGravityRoutine();
@@ -781,7 +910,6 @@ namespace CARE.Gameplay
                     }
                     else if (emptyCount > 0)
                     {
-                        // Move down by emptyCount
                         int newY = y - emptyCount;
                         Match3Tile tile = grid[x, y];
                         grid[x, y] = null;
@@ -793,7 +921,6 @@ namespace CARE.Gameplay
                     }
                 }
 
-                // Refill top vacated spots with new random tiles
                 for (int i = 0; i < emptyCount; i++)
                 {
                     int spawnY = ROWS - emptyCount + i;
@@ -807,13 +934,16 @@ namespace CARE.Gameplay
 
         #endregion
 
-        #region Enemy Damage & Reaction
+        #region Enemy Damage, Hit & Miss Reactions
 
+        /// <summary>
+        /// Triggered when a rocket hits the Boss Hitbox!
+        /// </summary>
         public void OnEnemyHit(int damage, int combo, Vector2 hitPos, Color hitColor)
         {
             if (isEnemyDefeated) return;
 
-            PlaySound(sfxHit, 0.9f);
+            PlaySound(sfxHit, 0.95f);
 
             // Deduct HP
             TargetCurrentHP = Mathf.Max(0, TargetCurrentHP - damage);
@@ -825,7 +955,7 @@ namespace CARE.Gameplay
             // Floating Damage Number
             SpawnFloatingDamage(damage, combo, hitPos);
 
-            // Punchy Enemy Shake & Red Flash
+            // Enemy Shake & Red Flash
             StartCoroutine(EnemyHitReactionRoutine());
 
             // Switch to enraged sprite if low HP
@@ -833,11 +963,32 @@ namespace CARE.Gameplay
             {
                 enemyImage.sprite = enemyEnragedSprite;
             }
+
+            // If Boss defeated by rocket impact, trigger victory immediately
+            if (TargetCurrentHP <= 0 && !isEnemyDefeated)
+            {
+                StartCoroutine(HandleVictorySequence());
+            }
+        }
+
+        /// <summary>
+        /// Triggered when a rocket flies past without hitting the Boss Hitbox!
+        /// </summary>
+        public void OnEnemyMiss(Vector2 missPos)
+        {
+            if (isEnemyDefeated) return;
+
+            // Spawn subtle "MISS" text popup
+            SpawnFloatingMiss(missPos);
+
+            // Spawn small smoke puff
+            SpawnSmokePuff(missPos);
         }
 
         private void SpawnImpactExplosion(Vector2 pos, Color color)
         {
             Transform layer = damageTextLayer != null ? damageTextLayer : combatPanel.transform;
+            Sprite white = GetWhiteSprite();
 
             // 1. Expanding Shockwave Ring
             GameObject ringObj = new GameObject("ImpactShockwave", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -846,18 +997,18 @@ namespace CARE.Gameplay
             ringRT.sizeDelta = new Vector2(40f, 40f);
             ringRT.anchoredPosition = pos;
             Image ringImg = ringObj.GetComponent<Image>();
-            ringImg.sprite = GetWhiteSprite();
+            ringImg.sprite = white;
             ringImg.color = new Color(color.r, color.g, color.b, 0.9f);
             ringImg.raycastTarget = false;
             StartCoroutine(AnimateShockwave(ringRT, ringImg));
 
-            // 2. Radial Spark Particles (8 bursts radiating outward)
+            // 2. Radial Spark Particles (8 bursts)
             int particleCount = 8;
             for (int i = 0; i < particleCount; i++)
             {
                 float angle = i * (360f / particleCount) * Mathf.Deg2Rad;
                 Vector2 dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-                float speed = UnityEngine.Random.Range(120f, 210f);
+                float speed = UnityEngine.Random.Range(130f, 220f);
 
                 GameObject sparkObj = new GameObject($"Spark_{i}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
                 sparkObj.transform.SetParent(layer, false);
@@ -865,11 +1016,36 @@ namespace CARE.Gameplay
                 sparkRT.sizeDelta = new Vector2(16f, 16f);
                 sparkRT.anchoredPosition = pos;
                 Image sparkImg = sparkObj.GetComponent<Image>();
-                sparkImg.sprite = GetWhiteSprite();
+                sparkImg.sprite = white;
                 sparkImg.color = Color.Lerp(color, Color.white, 0.5f);
                 sparkImg.raycastTarget = false;
 
                 StartCoroutine(AnimateSpark(sparkRT, sparkImg, dir * speed));
+            }
+        }
+
+        private void SpawnSmokePuff(Vector2 pos)
+        {
+            Transform layer = damageTextLayer != null ? damageTextLayer : combatPanel.transform;
+            Sprite white = GetWhiteSprite();
+
+            for (int i = 0; i < 4; i++)
+            {
+                float angle = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
+                Vector2 dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+                float speed = UnityEngine.Random.Range(40f, 90f);
+
+                GameObject smokeObj = new GameObject("SmokePuff", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                smokeObj.transform.SetParent(layer, false);
+                RectTransform smokeRT = smokeObj.GetComponent<RectTransform>();
+                smokeRT.sizeDelta = new Vector2(18f, 18f);
+                smokeRT.anchoredPosition = pos;
+                Image smokeImg = smokeObj.GetComponent<Image>();
+                smokeImg.sprite = white;
+                smokeImg.color = new Color(0.85f, 0.85f, 0.85f, 0.65f);
+                smokeImg.raycastTarget = false;
+
+                StartCoroutine(AnimateSpark(smokeRT, smokeImg, dir * speed));
             }
         }
 
@@ -878,7 +1054,7 @@ namespace CARE.Gameplay
             float duration = 0.28f;
             float elapsed = 0f;
             Vector3 startScale = Vector3.one * 0.4f;
-            Vector3 endScale = Vector3.one * 2.5f;
+            Vector3 endScale = Vector3.one * 2.6f;
 
             while (elapsed < duration)
             {
@@ -895,7 +1071,7 @@ namespace CARE.Gameplay
 
         private IEnumerator AnimateSpark(RectTransform rt, Image img, Vector2 velocity)
         {
-            float duration = 0.35f;
+            float duration = 0.32f;
             float elapsed = 0f;
             Vector2 currentPos = rt.anchoredPosition;
 
@@ -980,16 +1156,15 @@ namespace CARE.Gameplay
             while (elapsed < duration)
             {
                 elapsed += Time.deltaTime;
-                float rx = UnityEngine.Random.Range(-16f, 16f);
-                float ry = UnityEngine.Random.Range(-12f, 12f);
+                float rx = UnityEngine.Random.Range(-14f, 14f);
+                float ry = UnityEngine.Random.Range(-10f, 10f);
                 if (enemyRect != null)
                 {
-                    enemyRect.anchoredPosition = enemyBasePos + new Vector2(rx, ry);
+                    enemyRect.anchoredPosition = new Vector2(bossCurrentX + rx, bossBaseY + ry);
                 }
                 yield return null;
             }
 
-            if (enemyRect != null) enemyRect.anchoredPosition = enemyBasePos;
             enemyImage.color = Color.white;
         }
 
@@ -1005,9 +1180,8 @@ namespace CARE.Gameplay
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.sizeDelta = new Vector2(320, 60);
 
-            // Position slightly jittered above enemy
-            float rx = UnityEngine.Random.Range(-40f, 40f);
-            float ry = UnityEngine.Random.Range(-15f, 25f);
+            float rx = UnityEngine.Random.Range(-35f, 35f);
+            float ry = UnityEngine.Random.Range(-10f, 20f);
             rt.anchoredPosition = new Vector2(pos.x + rx, pos.y + 40f + ry);
 
             Text txt = dmgObj.AddComponent<Text>();
@@ -1033,12 +1207,37 @@ namespace CARE.Gameplay
             StartCoroutine(AnimateFloatingText(rt, txt));
         }
 
+        private void SpawnFloatingMiss(Vector2 pos)
+        {
+            Transform layer = damageTextLayer != null ? damageTextLayer : combatPanel.transform;
+
+            GameObject missObj = new GameObject("MissText", typeof(RectTransform));
+            missObj.transform.SetParent(layer, false);
+            RectTransform rt = missObj.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(240, 50);
+            rt.anchoredPosition = new Vector2(pos.x, pos.y + 20f);
+
+            Text txt = missObj.AddComponent<Text>();
+            txt.font = GetGameFont();
+            txt.alignment = TextAnchor.MiddleCenter;
+            txt.raycastTarget = false;
+            txt.text = "MELESET!";
+            txt.fontSize = 22;
+            txt.fontStyle = FontStyle.Bold;
+            txt.color = new Color(0.85f, 0.85f, 0.85f, 0.85f); // Soft grey-white
+
+            StartCoroutine(AnimateFloatingText(rt, txt));
+        }
+
         private IEnumerator AnimateFloatingText(RectTransform rt, Text txt)
         {
-            float duration = 0.75f;
+            float duration = 0.7f;
             float elapsed = 0f;
             Vector2 startPos = rt.anchoredPosition;
-            Vector2 endPos = startPos + new Vector2(0, 65f);
+            Vector2 endPos = startPos + new Vector2(0, 60f);
 
             while (elapsed < duration)
             {
@@ -1065,11 +1264,14 @@ namespace CARE.Gameplay
         private IEnumerator HandleVictorySequence()
         {
             isEnemyDefeated = true;
+            isBossMoving = false;
             CanPlayerMove = false;
 
             PlaySound(sfxBonus, 1f);
 
-            // Enemy Defeat Animation (shrink & fade)
+            if (hitboxIndicatorObj != null) hitboxIndicatorObj.SetActive(false);
+
+            // Enemy Defeat Animation (shrink & rotate away)
             if (enemyImage != null)
             {
                 float elapsed = 0f;
@@ -1097,7 +1299,7 @@ namespace CARE.Gameplay
                                             $"• Sisa Langkah: {MovesRemaining}\n" +
                                             $"• Total EXP Diperoleh: 🌟 +{Score:N0} EXP\n" +
                                             $"• Combo Maksimal: x{MaxComboReached}\n\n" +
-                                            $"Kombinasi barang bukti forensik berhasil memukul mundur Doctor Sawit Man!";
+                                            $"Tembakan roket forensik berhasil memukul mundur Doctor Sawit Man!";
                 }
             }
         }
@@ -1192,16 +1394,13 @@ namespace CARE.Gameplay
         {
             if (hpBarFill == null) return;
 
-            // Ensure sprite is assigned for Image.Type.Filled
             if (hpBarFill.sprite == null)
             {
                 hpBarFill.sprite = GetWhiteSprite();
             }
 
-            // 1. Image.Type.Filled fillAmount
             hpBarFill.fillAmount = ratio;
 
-            // 2. Double-guarantee: physically shrink RectTransform anchorMax.x from 1.0 down to ratio
             RectTransform rt = hpBarFill.rectTransform;
             if (rt != null)
             {
@@ -1211,7 +1410,6 @@ namespace CARE.Gameplay
                 rt.offsetMax = new Vector2(-2f, -2f);
             }
 
-            // 3. Dynamic color shift: Green -> Yellow -> Red
             Color barColor;
             if (ratio > 0.5f)
             {
