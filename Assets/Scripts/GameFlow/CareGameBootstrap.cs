@@ -662,47 +662,29 @@ namespace CARE.Core
             Sprite forestBg = Resources.Load<Sprite>("Environtment/image 2614");
             if (forestBg != null) { bgImg.sprite = forestBg; bgImg.color = new Color(0.35f, 0.38f, 0.35f, 1f); }
 
-            // 1. Top Header Bar
-            GameObject headerBar = CreateUIBox("HeaderBar", panel.transform, new Color(0.05f, 0.08f, 0.06f, 0.94f));
-            RectTransform headerRT = headerBar.GetComponent<RectTransform>();
-            headerRT.anchorMin = new Vector2(0f, 0.91f);
-            headerRT.anchorMax = new Vector2(1f, 1f);
-            headerRT.offsetMin = Vector2.zero;
-            headerRT.offsetMax = Vector2.zero;
-
-            Text titleText = CreateUIText("LocationTitle", headerBar.transform, "⚔️ AREA INVESTIGASI: TEPI HUTAN", 22, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(30, 0), new Vector2(450, 48));
+            // 1. Top Area (Location Title & Boss HP Bar)
+            Text titleText = CreateUIText("LocationTitle", panel.transform, "⚔️ AREA INVESTIGASI: TEPI HUTAN", 20, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(30, -25), new Vector2(460, 40));
             RectTransform ttRT = titleText.GetComponent<RectTransform>();
-            ttRT.anchorMin = new Vector2(0f, 0.5f);
-            ttRT.anchorMax = new Vector2(0f, 0.5f);
-            ttRT.pivot = new Vector2(0f, 0.5f);
+            ttRT.anchorMin = new Vector2(0f, 1f);
+            ttRT.anchorMax = new Vector2(0f, 1f);
+            ttRT.pivot = new Vector2(0f, 1f);
             titleText.alignment = TextAnchor.MiddleLeft;
 
-            Text totalDmgText = CreateUIText("TotalDmgText", headerBar.transform, "💥 Total DMG: 0", 20, new Color(1f, 0.45f, 0.45f), FontStyle.Bold, new Vector2(-250, 0), new Vector2(210, 44));
-            Text turnsText = CreateUIText("TurnsText", headerBar.transform, "🎯 Turns: 24/24", 20, Color.white, FontStyle.Bold, new Vector2(-40, 0), new Vector2(190, 44));
-            Text timerText = CreateUIText("TimerText", headerBar.transform, "⏱️ Time: 00:30", 20, new Color(0.4f, 0.95f, 0.95f), FontStyle.Bold, new Vector2(160, 0), new Vector2(190, 44));
-            Text scoreText = CreateUIText("ScoreText", headerBar.transform, "🌟 EXP: 0", 19, new Color(1f, 0.85f, 0.2f), FontStyle.Bold, new Vector2(350, 0), new Vector2(180, 44));
+            // Enemy Name Tag (Top Center)
+            Text enemyNameText = CreateUIText("EnemyName", panel.transform, "DOCTOR SAWIT MAN", 18, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, -15), new Vector2(700, 30));
+            RectTransform entRT = enemyNameText.GetComponent<RectTransform>();
+            entRT.anchorMin = new Vector2(0.5f, 1f);
+            entRT.anchorMax = new Vector2(0.5f, 1f);
+            entRT.pivot = new Vector2(0.5f, 1f);
 
-            Button exitMissionBtn = CreateUIButton("BtnExitMission", headerBar.transform, "⬅️ Keluar Misi", new Vector2(-40, 0), new Vector2(200, 46), new Color(0.45f, 0.22f, 0.22f), () =>
-            {
-                if (GameFlowManager.Instance != null) GameFlowManager.Instance.OpenStageMap();
-            });
-            RectTransform exitRT = exitMissionBtn.GetComponent<RectTransform>();
-            exitRT.anchorMin = new Vector2(1f, 0.5f);
-            exitRT.anchorMax = new Vector2(1f, 0.5f);
-            exitRT.pivot = new Vector2(1f, 0.5f);
-
-            Text comboText = CreateUIText("ComboBanner", panel.transform, "⚡ COMBO x2!", 32, new Color(1f, 0.92f, 0.2f), FontStyle.Bold, new Vector2(0, 480), new Vector2(500, 50));
-            comboText.gameObject.SetActive(false);
-
-            // 2. Upper Battlefield Area (Target / Enemy Section)
-            // Enemy Name Tag
-            Text enemyNameText = CreateUIText("EnemyName", panel.transform, "DOCTOR SAWIT MAN", 22, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 450), new Vector2(700, 36));
-
-            // Enemy HP Bar Container (Wider bar for wider screen: 780x28)
+            // Enemy HP Bar Container (Top Center, below Name)
             GameObject hpBarObj = CreateUIBox("HPBarContainer", panel.transform, new Color(0.12f, 0.05f, 0.05f, 0.95f));
             RectTransform hpBarRT = hpBarObj.GetComponent<RectTransform>();
-            hpBarRT.anchoredPosition = new Vector2(0, 415);
-            hpBarRT.sizeDelta = new Vector2(780, 28);
+            hpBarRT.anchorMin = new Vector2(0.5f, 1f);
+            hpBarRT.anchorMax = new Vector2(0.5f, 1f);
+            hpBarRT.pivot = new Vector2(0.5f, 1f);
+            hpBarRT.anchoredPosition = new Vector2(0, -45);
+            hpBarRT.sizeDelta = new Vector2(780, 26);
 
             // HP Red Background Bar (Revealed when HP decreases!)
             GameObject hpBgObj = new GameObject("HPBg", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -714,7 +696,7 @@ namespace CARE.Core
             hpBgRT.offsetMax = new Vector2(-2, -2);
             Image hpBgImg = hpBgObj.GetComponent<Image>();
             hpBgImg.sprite = Match3CombatManager.GetWhiteSprite();
-            hpBgImg.color = new Color(0.45f, 0.12f, 0.12f, 1f); // Dark Red background exposed as HP decreases
+            hpBgImg.color = new Color(0.45f, 0.12f, 0.12f, 1f);
             hpBgImg.raycastTarget = false;
 
             // HP Fill (Front Health Bar that shrinks dynamically)
@@ -734,14 +716,103 @@ namespace CARE.Core
             hpFillImg.raycastTarget = false;
 
             // HP Text
-            Text hpText = CreateUIText("HPText", hpBarObj.transform, "HP: 500 / 500 (100%)", 17, Color.white, FontStyle.Bold, Vector2.zero, new Vector2(500, 26));
+            Text hpText = CreateUIText("HPText", hpBarObj.transform, "HP: 500 / 500 (100%)", 16, Color.white, FontStyle.Bold, Vector2.zero, new Vector2(500, 24));
 
-            // Enemy Character Sprite (Moving Boss with Hitbox)
+            // 2. Right Side Live Combat HUD (Real-time Live Stats)
+            GameObject rightHud = CreateUIBox("RightCombatHUD", panel.transform, new Color(0.04f, 0.08f, 0.06f, 0.94f));
+            RectTransform hudRT = rightHud.GetComponent<RectTransform>();
+            hudRT.anchorMin = new Vector2(1f, 0.5f);
+            hudRT.anchorMax = new Vector2(1f, 0.5f);
+            hudRT.pivot = new Vector2(1f, 0.5f);
+            hudRT.sizeDelta = new Vector2(275, 545);
+            hudRT.anchoredPosition = new Vector2(-20, -30);
+
+            // Sidebar Header Banner
+            GameObject hudHeader = CreateUIBox("HudHeader", rightHud.transform, new Color(0.08f, 0.18f, 0.12f, 0.98f));
+            RectTransform hhRT = hudHeader.GetComponent<RectTransform>();
+            hhRT.anchorMin = new Vector2(0.5f, 1f);
+            hhRT.anchorMax = new Vector2(0.5f, 1f);
+            hhRT.pivot = new Vector2(0.5f, 1f);
+            hhRT.anchoredPosition = new Vector2(0, -8);
+            hhRT.sizeDelta = new Vector2(255, 38);
+            CreateUIText("HudTitle", hudHeader.transform, "📊 STATUS MISI", 17, new Color(1f, 0.88f, 0.25f), FontStyle.Bold, Vector2.zero, new Vector2(250, 32));
+
+            // Stat 1: ⏱️ TIMER COUNTDOWN
+            GameObject timerBox = CreateUIBox("TimerBox", rightHud.transform, new Color(0.07f, 0.14f, 0.11f, 0.95f));
+            RectTransform tboxRT = timerBox.GetComponent<RectTransform>();
+            tboxRT.anchorMin = new Vector2(0.5f, 1f);
+            tboxRT.anchorMax = new Vector2(0.5f, 1f);
+            tboxRT.pivot = new Vector2(0.5f, 1f);
+            tboxRT.anchoredPosition = new Vector2(0, -56);
+            tboxRT.sizeDelta = new Vector2(255, 68);
+            CreateUIText("TimerLbl", timerBox.transform, "⏱️ SISA WAKTU", 13, new Color(0.6f, 0.85f, 0.8f), FontStyle.Bold, new Vector2(0, 15), new Vector2(240, 22));
+            Text timerText = CreateUIText("TimerText", timerBox.transform, "00:30", 26, new Color(0.4f, 0.95f, 0.95f), FontStyle.Bold, new Vector2(0, -11), new Vector2(240, 32));
+
+            // Stat 2: 🎯 TURNS COUNTER
+            GameObject turnsBox = CreateUIBox("TurnsBox", rightHud.transform, new Color(0.07f, 0.14f, 0.11f, 0.95f));
+            RectTransform turnRT = turnsBox.GetComponent<RectTransform>();
+            turnRT.anchorMin = new Vector2(0.5f, 1f);
+            turnRT.anchorMax = new Vector2(0.5f, 1f);
+            turnRT.pivot = new Vector2(0.5f, 1f);
+            turnRT.anchoredPosition = new Vector2(0, -132);
+            turnRT.sizeDelta = new Vector2(255, 68);
+            CreateUIText("TurnsLbl", turnsBox.transform, "🎯 SISA LANGKAH", 13, new Color(0.85f, 0.85f, 0.85f), FontStyle.Bold, new Vector2(0, 15), new Vector2(240, 22));
+            Text turnsText = CreateUIText("TurnsText", turnsBox.transform, "24 / 24", 24, Color.white, FontStyle.Bold, new Vector2(0, -11), new Vector2(240, 30));
+
+            // Stat 3: 💥 TOTAL DAMAGE ACCUMULATED
+            GameObject dmgBox = CreateUIBox("DmgBox", rightHud.transform, new Color(0.18f, 0.08f, 0.08f, 0.95f));
+            RectTransform dmgRT = dmgBox.GetComponent<RectTransform>();
+            dmgRT.anchorMin = new Vector2(0.5f, 1f);
+            dmgRT.anchorMax = new Vector2(0.5f, 1f);
+            dmgRT.pivot = new Vector2(0.5f, 1f);
+            dmgRT.anchoredPosition = new Vector2(0, -208);
+            dmgRT.sizeDelta = new Vector2(255, 68);
+            CreateUIText("DmgLbl", dmgBox.transform, "💥 TOTAL DAMAGE", 13, new Color(1f, 0.65f, 0.65f), FontStyle.Bold, new Vector2(0, 15), new Vector2(240, 22));
+            Text totalDmgText = CreateUIText("TotalDmgText", dmgBox.transform, "0 DMG", 24, new Color(1f, 0.38f, 0.38f), FontStyle.Bold, new Vector2(0, -11), new Vector2(240, 30));
+
+            // Stat 4: ⚡ PATROL SPEED
+            GameObject speedBox = CreateUIBox("SpeedBox", rightHud.transform, new Color(0.16f, 0.13f, 0.05f, 0.95f));
+            RectTransform speedRT = speedBox.GetComponent<RectTransform>();
+            speedRT.anchorMin = new Vector2(0.5f, 1f);
+            speedRT.anchorMax = new Vector2(0.5f, 1f);
+            speedRT.pivot = new Vector2(0.5f, 1f);
+            speedRT.anchoredPosition = new Vector2(0, -284);
+            speedRT.sizeDelta = new Vector2(255, 68);
+            CreateUIText("SpeedLbl", speedBox.transform, "⚡ PATROL SPEED", 13, new Color(1f, 0.88f, 0.5f), FontStyle.Bold, new Vector2(0, 15), new Vector2(240, 22));
+            Text patrolSpeedText = CreateUIText("PatrolSpeedText", speedBox.transform, "220 px/s", 22, new Color(1f, 0.82f, 0.2f), FontStyle.Bold, new Vector2(0, -11), new Vector2(240, 30));
+
+            // Stat 5: 🌟 EXP GAINED
+            GameObject expBox = CreateUIBox("ExpBox", rightHud.transform, new Color(0.07f, 0.15f, 0.09f, 0.95f));
+            RectTransform expRT = expBox.GetComponent<RectTransform>();
+            expRT.anchorMin = new Vector2(0.5f, 1f);
+            expRT.anchorMax = new Vector2(0.5f, 1f);
+            expRT.pivot = new Vector2(0.5f, 1f);
+            expRT.anchoredPosition = new Vector2(0, -360);
+            expRT.sizeDelta = new Vector2(255, 68);
+            CreateUIText("ExpLbl", expBox.transform, "🌟 EXP TERKUMPUL", 13, new Color(0.65f, 1f, 0.65f), FontStyle.Bold, new Vector2(0, 15), new Vector2(240, 22));
+            Text scoreText = CreateUIText("ScoreText", expBox.transform, "+0 EXP", 22, new Color(0.4f, 1f, 0.45f), FontStyle.Bold, new Vector2(0, -11), new Vector2(240, 30));
+
+            // Exit Mission Button at the bottom of the Right Sidebar
+            Button exitMissionBtn = CreateUIButton("BtnExitMission", rightHud.transform, "⬅️ KELUAR MISI", new Vector2(0, -450), new Vector2(255, 44), new Color(0.48f, 0.2f, 0.2f), () =>
+            {
+                if (GameFlowManager.Instance != null) GameFlowManager.Instance.OpenStageMap();
+            });
+            RectTransform exitRT = exitMissionBtn.GetComponent<RectTransform>();
+            exitRT.anchorMin = new Vector2(0.5f, 1f);
+            exitRT.anchorMax = new Vector2(0.5f, 1f);
+            exitRT.pivot = new Vector2(0.5f, 1f);
+
+            Text comboText = CreateUIText("ComboBanner", panel.transform, "⚡ COMBO x2!", 32, new Color(1f, 0.92f, 0.2f), FontStyle.Bold, new Vector2(0, 480), new Vector2(500, 50));
+            comboText.gameObject.SetActive(false);
+
+            // 3. Enemy Character Sprite (Moving Boss with Hitbox)
             GameObject bossArtObj = new GameObject("BossTargetArt");
             bossArtObj.transform.SetParent(panel.transform, false);
             RectTransform artRT = bossArtObj.AddComponent<RectTransform>();
             artRT.sizeDelta = new Vector2(240, 240);
             artRT.anchoredPosition = new Vector2(0, 220);
+            artRT.localScale = Vector3.one;
+            artRT.localEulerAngles = Vector3.zero;
             Image enemyImg = bossArtObj.AddComponent<Image>();
             enemyImg.sprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_idle");
             if (enemyImg.sprite == null) enemyImg.sprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man");
@@ -833,6 +904,7 @@ namespace CARE.Core
                     totalDmgText,
                     turnsText,
                     timerText,
+                    patrolSpeedText,
                     scoreText,
                     comboText,
                     exitMissionBtn,

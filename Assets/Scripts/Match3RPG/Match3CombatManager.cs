@@ -90,11 +90,12 @@ namespace CARE.Gameplay
         private RectTransform projectileLayer;
         private RectTransform damageTextLayer;
 
-        // Header UI
+        // Header & Live Combat HUD UI
         private Text stageTitleText;
         private Text totalDmgText;
         private Text turnsText;
         private Text timerText;
+        private Text patrolSpeedText;
         private Text scoreText;
         private Text comboBannerText;
         private Button exitButton;
@@ -211,7 +212,16 @@ namespace CARE.Gameplay
                 float targetFacing = bossMoveDirection > 0 ? -1f : 1f;
                 Vector3 currentScale = enemyRect.localScale;
                 currentScale.x = targetFacing;
+                currentScale.y = 1f;
+                currentScale.z = 1f;
                 enemyRect.localScale = currentScale;
+                enemyRect.localEulerAngles = Vector3.zero;
+            }
+
+            // 3. Live Combat HUD real-time updates
+            if (patrolSpeedText != null && combatPanel != null && combatPanel.activeSelf)
+            {
+                patrolSpeedText.text = $"{bossPatrolSpeed:F0} px/s";
             }
         }
 
@@ -246,6 +256,8 @@ namespace CARE.Gameplay
             RectTransform frt = hitboxIndicatorObj.GetComponent<RectTransform>();
             frt.sizeDelta = new Vector2(BossHitboxWidth, BossHitboxHeight);
             frt.anchoredPosition = Vector2.zero;
+            frt.localEulerAngles = Vector3.zero;
+            frt.localScale = Vector3.one;
 
             Sprite white = GetWhiteSprite();
 
@@ -311,6 +323,7 @@ namespace CARE.Gameplay
             Text totalDmgTxt,
             Text turnsTxt,
             Text timerTxt,
+            Text patrolSpeedTxt,
             Text scoreTxt,
             Text comboTxt,
             Button exitBtn,
@@ -336,6 +349,7 @@ namespace CARE.Gameplay
             totalDmgText = totalDmgTxt;
             turnsText = turnsTxt;
             timerText = timerTxt;
+            patrolSpeedText = patrolSpeedTxt;
             scoreText = scoreTxt;
             comboBannerText = comboTxt;
             exitButton = exitBtn;
@@ -348,7 +362,11 @@ namespace CARE.Gameplay
                 {
                     enemyBasePos = enemyRect.anchoredPosition;
                     bossBaseY = enemyBasePos.y;
+                    enemyRect.localScale = Vector3.one;
+                    enemyRect.localEulerAngles = Vector3.zero;
                 }
+                enemyImage.transform.localScale = Vector3.one;
+                enemyImage.transform.localEulerAngles = Vector3.zero;
             }
             hpBarFill = hpFill;
             hpText = hpTxt;
@@ -551,6 +569,13 @@ namespace CARE.Gameplay
                 enemyImage.sprite = enemyIdleSprite;
                 enemyImage.color = Color.white;
                 enemyImage.transform.localScale = Vector3.one;
+                enemyImage.transform.localEulerAngles = Vector3.zero;
+            }
+
+            if (enemyRect != null)
+            {
+                enemyRect.localScale = Vector3.one;
+                enemyRect.localEulerAngles = Vector3.zero;
             }
         }
 
@@ -1631,18 +1656,23 @@ namespace CARE.Gameplay
 
             if (totalDmgText != null)
             {
-                totalDmgText.text = $"💥 Total DMG: {TotalDamageAccumulated:N0}";
+                totalDmgText.text = $"{TotalDamageAccumulated:N0} DMG";
             }
 
             if (turnsText != null)
             {
-                turnsText.text = $"🎯 Turns: {MovesRemaining}/{MaxTurns}";
+                turnsText.text = $"{MovesRemaining} / {MaxTurns}";
                 turnsText.color = MovesRemaining <= 4 ? new Color(1f, 0.35f, 0.35f) : Color.white;
+            }
+
+            if (patrolSpeedText != null)
+            {
+                patrolSpeedText.text = $"{bossPatrolSpeed:F0} px/s";
             }
 
             if (scoreText != null)
             {
-                scoreText.text = $"🌟 EXP: {Score:N0}";
+                scoreText.text = $"+{Score:N0} EXP";
             }
 
             UpdateTimerUI();
@@ -1655,7 +1685,7 @@ namespace CARE.Gameplay
                 int totalSec = Mathf.CeilToInt(TimeRemaining);
                 int mins = totalSec / 60;
                 int secs = totalSec % 60;
-                timerText.text = $"⏱️ Time: {mins:D2}:{secs:D2}";
+                timerText.text = $"{mins:D2}:{secs:D2}";
 
                 if (TimeRemaining <= 10f)
                 {
@@ -1664,7 +1694,7 @@ namespace CARE.Gameplay
                 }
                 else
                 {
-                    timerText.color = new Color(1f, 0.92f, 0.25f);
+                    timerText.color = new Color(0.4f, 0.95f, 0.95f);
                 }
             }
         }
