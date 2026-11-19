@@ -30,10 +30,13 @@ namespace CARE.Gameplay
     /// <summary>
     /// Core Game Engine for Match-3 RPG Combat (Candy Crush + Dungeon Puzzles).
     /// Grid format: 15x6 (15 Columns x 6 Rows).
-    /// Boss moves horizontally across the maximum grid width (patrolling back and forth).
-    /// Boss has a real-time Hitbox.
-    /// When player matches blocks, rockets launch straight UPWARDS.
-    /// If a rocket collides with the boss hitbox, it deals damage. Otherwise, it misses!
+    /// Features:
+    /// - Total Damage Accumulated (Total DMG: N)
+    /// - Turns Counter (Turns: remaining/max)
+    /// - Real-time Countdown Timer (Time: MM:SS)
+    /// - Difficulty Scaling: higher stages have fewer turns, less time, faster boss patrol, and rigged spawn chances
+    /// - Fair combo validation: guaranteed valid moves always exist (automatic reshuffle if no moves)
+    /// - Moving Boss with real-time Hitbox and vertical Rocket attack collision
     /// </summary>
     public class Match3CombatManager : MonoBehaviour
     {
@@ -60,12 +63,22 @@ namespace CARE.Gameplay
         private bool isBossMoving = true;
         private GameObject hitboxIndicatorObj;
 
-        // Runtime State
+        // Runtime Stats
         public bool CanPlayerMove { get; private set; } = false;
-        public int MovesRemaining { get; private set; }
+        public int MaxTurns { get; private set; } = 24;
+        public int MovesRemaining { get; private set; } = 24;
+        public int TotalDamageAccumulated { get; private set; } = 0;
+        public float TimeRemaining { get; private set; } = 45f;
+        public float MaxLevelTime { get; private set; } = 45f;
+        public bool IsTimerRunning { get; private set; } = false;
+
         public int Score { get; private set; }
         public int CurrentCombo { get; private set; } = 1;
         public int MaxComboReached { get; private set; } = 1;
+
+        // Difficulty Tuning
+        private int activeTileTypeCount = 5;
+        private float riggedSpawnProbability = 0f;
 
         // Target / Enemy Stats
         public int TargetMaxHP { get; private set; } = 600;
@@ -79,7 +92,9 @@ namespace CARE.Gameplay
 
         // Header UI
         private Text stageTitleText;
-        private Text movesCounterText;
+        private Text totalDmgText;
+        private Text turnsText;
+        private Text timerText;
         private Text scoreText;
         private Text comboBannerText;
         private Button exitButton;
@@ -97,6 +112,8 @@ namespace CARE.Gameplay
         private Button victoryContinueBtn;
 
         private GameObject defeatModal;
+        private Text defeatTitleText;
+        private Text defeatDescText;
         private Button defeatRetryBtn;
         private Button defeatExitBtn;
 
@@ -156,7 +173,20 @@ namespace CARE.Gameplay
 
         private void Update()
         {
-            // Boss Patrol Horizontal Movement (Repeat right-to-left and left-to-right across max grid width)
+            // 1. Timer Countdown
+            if (IsTimerRunning && !isEnemyDefeated && combatPanel != null && combatPanel.activeSelf)
+            {
+                TimeRemaining -= Time.deltaTime;
+                if (TimeRemaining <= 0f)
+                {
+                    TimeRemaining = 0f;
+                    IsTimerRunning = false;
+                    StartCoroutine(HandleTimeOutDefeat());
+                }
+                UpdateTimerUI();
+            }
+
+            // 2. Boss Patrol Horizontal Movement
             if (enemyRect != null && !isEnemyDefeated && combatPanel != null && combatPanel.activeSelf)
             {
                 if (isBossMoving)
@@ -175,13 +205,9 @@ namespace CARE.Gameplay
                     }
                 }
 
-                // Smooth walking bob animation
                 float walkBob = Mathf.Abs(Mathf.Sin(Time.time * 6f)) * 8f;
                 enemyRect.anchoredPosition = new Vector2(bossCurrentX, bossBaseY + walkBob);
 
-                // Doctor Sawit Man naturally faces left.
-                // When moving left (direction = -1): scale.x = 1.
-                // When moving right (direction = 1): scale.x = -1 (flipped).
                 float targetFacing = bossMoveDirection > 0 ? -1f : 1f;
                 Vector3 currentScale = enemyRect.localScale;
                 currentScale.x = targetFacing;
@@ -191,9 +217,6 @@ namespace CARE.Gameplay
 
         #region Hitbox & Collision Detection
 
-        /// <summary>
-        /// Checks if a projectile overlaps with the moving Boss Hitbox.
-        /// </summary>
         public bool CheckEnemyHit(Vector2 projPos, float radius = 28f)
         {
             if (isEnemyDefeated || enemyRect == null || combatPanel == null || !combatPanel.activeSelf)
@@ -226,7 +249,7 @@ namespace CARE.Gameplay
 
             Sprite white = GetWhiteSprite();
 
-            // 1. Left Target Bracket [
+            // Left Target Bracket [
             GameObject leftBracket = new GameObject("LeftBracket", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             leftBracket.transform.SetParent(hitboxIndicatorObj.transform, false);
             RectTransform lrt = leftBracket.GetComponent<RectTransform>();
@@ -237,7 +260,7 @@ namespace CARE.Gameplay
             lImg.color = new Color(1f, 0.3f, 0.3f, 0.7f);
             lImg.raycastTarget = false;
 
-            // 2. Right Target Bracket ]
+            // Right Target Bracket ]
             GameObject rightBracket = new GameObject("RightBracket", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             rightBracket.transform.SetParent(hitboxIndicatorObj.transform, false);
             RectTransform rrt = rightBracket.GetComponent<RectTransform>();
@@ -248,7 +271,7 @@ namespace CARE.Gameplay
             rImg.color = new Color(1f, 0.3f, 0.3f, 0.7f);
             rImg.raycastTarget = false;
 
-            // 3. Ground Target Zone Ring at feet
+            // Ground Target Zone Ring at feet
             GameObject ringObj = new GameObject("FootTargetZone", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             ringObj.transform.SetParent(hitboxIndicatorObj.transform, false);
             RectTransform ringRT = ringObj.GetComponent<RectTransform>();
@@ -259,7 +282,7 @@ namespace CARE.Gameplay
             ringImg.color = new Color(1f, 0.22f, 0.22f, 0.42f);
             ringImg.raycastTarget = false;
 
-            // 4. Target Label
+            // Target Label
             GameObject txtObj = new GameObject("TargetLabel", typeof(RectTransform));
             txtObj.transform.SetParent(hitboxIndicatorObj.transform, false);
             RectTransform trt = txtObj.GetComponent<RectTransform>();
@@ -285,7 +308,9 @@ namespace CARE.Gameplay
             RectTransform projLayer,
             RectTransform dmgLayer,
             Text titleTxt,
-            Text movesTxt,
+            Text totalDmgTxt,
+            Text turnsTxt,
+            Text timerTxt,
             Text scoreTxt,
             Text comboTxt,
             Button exitBtn,
@@ -297,6 +322,8 @@ namespace CARE.Gameplay
             Text winStatsTxt,
             Button winBtn,
             GameObject loseModal,
+            Text loseTitleTxt,
+            Text loseDescTxt,
             Button loseRetryBtn,
             Button loseExitBtn)
         {
@@ -306,7 +333,9 @@ namespace CARE.Gameplay
             damageTextLayer = dmgLayer;
 
             stageTitleText = titleTxt;
-            movesCounterText = movesTxt;
+            totalDmgText = totalDmgTxt;
+            turnsText = turnsTxt;
+            timerText = timerTxt;
             scoreText = scoreTxt;
             comboBannerText = comboTxt;
             exitButton = exitBtn;
@@ -330,6 +359,8 @@ namespace CARE.Gameplay
             victoryContinueBtn = winBtn;
 
             defeatModal = loseModal;
+            defeatTitleText = loseTitleTxt;
+            defeatDescText = loseDescTxt;
             defeatRetryBtn = loseRetryBtn;
             defeatExitBtn = loseExitBtn;
 
@@ -338,6 +369,7 @@ namespace CARE.Gameplay
                 exitButton.onClick.RemoveAllListeners();
                 exitButton.onClick.AddListener(() =>
                 {
+                    IsTimerRunning = false;
                     if (CARE.Core.GameFlowManager.Instance != null)
                     {
                         CARE.Core.GameFlowManager.Instance.OpenStageMap();
@@ -362,6 +394,7 @@ namespace CARE.Gameplay
                 defeatExitBtn.onClick.RemoveAllListeners();
                 defeatExitBtn.onClick.AddListener(() =>
                 {
+                    IsTimerRunning = false;
                     if (CARE.Core.GameFlowManager.Instance != null)
                     {
                         CARE.Core.GameFlowManager.Instance.OpenStageMap();
@@ -379,7 +412,11 @@ namespace CARE.Gameplay
         #region Start Combat
 
         /// <summary>
-        /// Starts Match-3 RPG Combat (15x6 Grid) with moving Boss and vertical Rocket attacks!
+        /// Starts Match-3 RPG Combat with difficulty scaling:
+        /// - Turns decrease as difficulty rises
+        /// - Timer decreases as difficulty rises
+        /// - Boss movement speed accelerates
+        /// - Rigged chances make accidental matches rarer, but legal combos are always guaranteed!
         /// </summary>
         public void StartCombat(int stage, int level, string locationName, Action onComplete)
         {
@@ -395,6 +432,7 @@ namespace CARE.Gameplay
             isEnemyDefeated = false;
             isBossMoving = true;
             Score = 0;
+            TotalDamageAccumulated = 0;
             CurrentCombo = 1;
             MaxComboReached = 1;
 
@@ -402,12 +440,12 @@ namespace CARE.Gameplay
             bossMinX = CalculateTilePosition(0, 0).x;
             bossMaxX = CalculateTilePosition(COLUMNS - 1, 0).x;
             bossCurrentX = bossMaxX; // Starts on the right side
-            bossMoveDirection = -1;  // Moves right-to-left first, then reverses!
+            bossMoveDirection = -1;  // Moves right-to-left first
 
             // Create target indicator
             CreateHitboxIndicator();
 
-            // Configure Target HP & Moves based on stage & level
+            // Configure Target HP, Turns, Timer, Boss Speed, and Rigging
             SetupLevelBalancing(stage, level);
 
             // Setup Criminal Case items for this stage
@@ -416,6 +454,9 @@ namespace CARE.Gameplay
             // Update UI
             UpdateHeaderUI();
             UpdateHPBarUI(true);
+
+            // Start Timer Countdown
+            IsTimerRunning = true;
 
             // Play Combat BGM
             if (CareAudioManager.Instance != null)
@@ -432,38 +473,71 @@ namespace CARE.Gameplay
 
         private void SetupLevelBalancing(int stage, int level)
         {
-            // Balanced for 15x6 grid with rocket timing mechanics
+            // Difficulty Scaling:
+            // S1 L1: Easiest (24 turns, 60s, speed 190, 4 types, 0% rigged)
+            // S1 L2: Easy-Medium (20 turns, 50s, speed 240, 5 types, 25% rigged)
+            // S2 L1: Medium (18 turns, 42s, speed 300, 5 types, 45% rigged)
+            // S2 L2: Medium-Hard (16 turns, 35s, speed 360, 5 types, 65% rigged)
+            // S3 L1: Hard (14 turns, 30s, speed 440, 6 types, 80% rigged)
+            // S3 L2: Boss Final / Extreme (12 turns, 25s, speed 520, 6 types, 90% rigged)
+
             if (stage == 1 && level == 1)
             {
-                TargetMaxHP = 450;
-                MovesRemaining = 25;
+                TargetMaxHP = 400;
+                MaxTurns = 24;
+                MaxLevelTime = 60f;
+                bossPatrolSpeed = 190f;
+                activeTileTypeCount = 4;
+                riggedSpawnProbability = 0.0f;
             }
             else if (stage == 1 && level == 2)
             {
-                TargetMaxHP = 650;
-                MovesRemaining = 24;
+                TargetMaxHP = 550;
+                MaxTurns = 20;
+                MaxLevelTime = 50f;
+                bossPatrolSpeed = 240f;
+                activeTileTypeCount = 5;
+                riggedSpawnProbability = 0.25f;
             }
             else if (stage == 2 && level == 1)
             {
-                TargetMaxHP = 800;
-                MovesRemaining = 24;
+                TargetMaxHP = 750;
+                MaxTurns = 18;
+                MaxLevelTime = 42f;
+                bossPatrolSpeed = 300f;
+                activeTileTypeCount = 5;
+                riggedSpawnProbability = 0.45f;
             }
             else if (stage == 2 && level == 2)
             {
-                TargetMaxHP = 1050;
-                MovesRemaining = 22;
+                TargetMaxHP = 950;
+                MaxTurns = 16;
+                MaxLevelTime = 35f;
+                bossPatrolSpeed = 360f;
+                activeTileTypeCount = 5;
+                riggedSpawnProbability = 0.65f;
             }
             else if (stage == 3 && level == 1)
             {
-                TargetMaxHP = 1300;
-                MovesRemaining = 22;
+                TargetMaxHP = 1200;
+                MaxTurns = 14;
+                MaxLevelTime = 30f;
+                bossPatrolSpeed = 440f;
+                activeTileTypeCount = 6;
+                riggedSpawnProbability = 0.80f;
             }
-            else
+            else // Stage 3 Level 2 (Final Boss)
             {
-                TargetMaxHP = 1750;
-                MovesRemaining = 26;
+                TargetMaxHP = 1600;
+                MaxTurns = 12;
+                MaxLevelTime = 25f;
+                bossPatrolSpeed = 520f;
+                activeTileTypeCount = 6;
+                riggedSpawnProbability = 0.90f;
             }
 
+            MovesRemaining = MaxTurns;
+            TimeRemaining = MaxLevelTime;
             TargetCurrentHP = TargetMaxHP;
 
             if (enemyNameText != null)
@@ -484,15 +558,16 @@ namespace CARE.Gameplay
         {
             currentTileTypes.Clear();
 
-            // 5 Candy / Gem Placeholder Element Types with high-contrast, juicy Candy Crush colors:
-            string[] candySymbols = new string[] { "🍎", "💧", "🌿", "⭐", "💎" };
+            // Up to 6 Candy / Gem Element Types with high-contrast, juicy colors:
+            string[] candySymbols = new string[] { "🍎", "💧", "🌿", "⭐", "💎", "🔥" };
             Color[] candyColors = new Color[]
             {
                 new Color(0.96f, 0.22f, 0.32f, 1f), // Red Ruby
                 new Color(0.12f, 0.65f, 1f, 1f),    // Blue Sapphire
                 new Color(0.14f, 0.88f, 0.42f, 1f), // Green Emerald
                 new Color(1f, 0.84f, 0.12f, 1f),    // Yellow Topaz
-                new Color(0.78f, 0.32f, 0.96f, 1f)  // Purple Amethyst
+                new Color(0.78f, 0.32f, 0.96f, 1f), // Purple Amethyst
+                new Color(1f, 0.48f, 0.12f, 1f)     // Fire Orange Amber
             };
 
             // Grab item data from CareStoryDatabase for this stage if available
@@ -504,35 +579,38 @@ namespace CARE.Gameplay
             else if (stage == 3 && level == 1) stageItems = CareStoryDatabase.Stage3_Level1_Items;
             else if (stage == 3 && level == 2) stageItems = CareStoryDatabase.Stage3_Level2_Items;
 
-            if (stageItems != null && stageItems.Count >= 5)
+            int countToLoad = Mathf.Min(activeTileTypeCount, 6);
+
+            for (int i = 0; i < countToLoad; i++)
             {
-                string folder = $"TemporaryAssets/HiddenObjects/Stage{stage}_Level{level}/";
-                for (int i = 0; i < 5; i++)
+                Sprite s = null;
+                string itemName = $"Item {i + 1}";
+
+                if (stageItems != null && i < stageItems.Count)
                 {
-                    Sprite s = Resources.Load<Sprite>(folder + stageItems[i].spriteName);
+                    itemName = stageItems[i].itemName;
+                    string folder = $"TemporaryAssets/HiddenObjects/Stage{stage}_Level{level}/";
+                    s = Resources.Load<Sprite>(folder + stageItems[i].spriteName);
                     if (s == null)
                     {
                         s = Resources.Load<Sprite>("TemporaryAssets/HiddenObjects/Stage1_Level1/" + stageItems[i].spriteName);
                     }
-                    currentTileTypes.Add(new Match3ItemDef(i, stageItems[i].itemName, candySymbols[i], s, candyColors[i]));
                 }
-            }
-            else
-            {
-                string[] defaultSprites = new string[] { "kotak_p3k", "botol_air", "kain_bersih", "peta_kawasan", "jejak_kaki_satwa" };
-                string[] defaultNames = new string[] { "Kotak P3K", "Botol Air", "Kain Bersih", "Peta Kawasan", "Jejak Satwa" };
-
-                for (int i = 0; i < 5; i++)
+                else
                 {
-                    Sprite s = Resources.Load<Sprite>("TemporaryAssets/HiddenObjects/Stage1_Level1/" + defaultSprites[i]);
-                    currentTileTypes.Add(new Match3ItemDef(i, defaultNames[i], candySymbols[i], s, candyColors[i]));
+                    string[] defaultSprites = new string[] { "kotak_p3k", "botol_air", "kain_bersih", "peta_kawasan", "jejak_kaki_satwa", "kotak_p3k" };
+                    string[] defaultNames = new string[] { "Kotak P3K", "Botol Air", "Kain Bersih", "Peta Kawasan", "Jejak Satwa", "Minyak Sawit" };
+                    s = Resources.Load<Sprite>("TemporaryAssets/HiddenObjects/Stage1_Level1/" + defaultSprites[i]);
+                    itemName = defaultNames[i];
                 }
+
+                currentTileTypes.Add(new Match3ItemDef(i, itemName, candySymbols[i], s, candyColors[i]));
             }
         }
 
         #endregion
 
-        #region Board Generation
+        #region Board Generation & Rigged Spawning
 
         private IEnumerator InitializeBoardRoutine()
         {
@@ -554,7 +632,7 @@ namespace CARE.Gameplay
 
             yield return null;
 
-            // Fill 15x6 grid with random types, guaranteeing no initial 3-matches
+            // Generate initial board with no 3-matches
             for (int x = 0; x < COLUMNS; x++)
             {
                 for (int y = 0; y < ROWS; y++)
@@ -562,14 +640,12 @@ namespace CARE.Gameplay
                     List<int> validTypes = new List<int>();
                     for (int t = 0; t < currentTileTypes.Count; t++)
                     {
-                        // Check horizontal match-3
                         if (x >= 2 && grid[x - 1, y] != null && grid[x - 2, y] != null)
                         {
                             if (grid[x - 1, y].TypeId == t && grid[x - 2, y].TypeId == t)
                                 continue;
                         }
 
-                        // Check vertical match-3
                         if (y >= 2 && grid[x, y - 1] != null && grid[x, y - 2] != null)
                         {
                             if (grid[x, y - 1].TypeId == t && grid[x, y - 2].TypeId == t)
@@ -584,11 +660,17 @@ namespace CARE.Gameplay
                 }
             }
 
+            // Guarantee that at least one legal move exists!
+            if (!HasPossibleValidMoves())
+            {
+                EnsureAtLeastOneMoveExists();
+            }
+
             PlaySound(sfxWhoosh, 0.7f);
             yield return new WaitForSeconds(0.2f);
 
             CanPlayerMove = true;
-            Debug.Log($"[Match3CombatManager] Board initialized with {COLUMNS}x{ROWS} candy tiles. Ready for player input!");
+            Debug.Log($"[Match3CombatManager] Board initialized with {COLUMNS}x{ROWS} candy tiles. Ready!");
         }
 
         private Match3Tile SpawnTileAt(int x, int y, int typeId, bool animateDrop = true)
@@ -621,6 +703,198 @@ namespace CARE.Gameplay
             float posY = startY + y * (TILE_SIZE + TILE_SPACING);
 
             return new Vector2(posX, posY);
+        }
+
+        /// <summary>
+        /// Rigged tile type selector:
+        /// On higher difficulties, suppresses colors that would form instant accidental cascades,
+        /// forcing the player to manually search and execute swaps!
+        /// </summary>
+        private int ChooseTileTypeWithRigging(int x, int y)
+        {
+            int totalTypes = currentTileTypes.Count;
+            if (UnityEngine.Random.value < riggedSpawnProbability)
+            {
+                // Find types that would complete a match-3
+                List<int> badTypes = new List<int>();
+
+                // Check vertical below
+                if (y >= 2 && grid[x, y - 1] != null && grid[x, y - 2] != null)
+                {
+                    if (grid[x, y - 1].TypeId == grid[x, y - 2].TypeId)
+                        badTypes.Add(grid[x, y - 1].TypeId);
+                }
+
+                // Check horizontal adjacent
+                if (x >= 2 && grid[x - 1, y] != null && grid[x - 2, y] != null)
+                {
+                    if (grid[x - 1, y].TypeId == grid[x - 2, y].TypeId)
+                        badTypes.Add(grid[x - 1, y].TypeId);
+                }
+
+                List<int> goodTypes = new List<int>();
+                for (int t = 0; t < totalTypes; t++)
+                {
+                    if (!badTypes.Contains(t)) goodTypes.Add(t);
+                }
+
+                if (goodTypes.Count > 0)
+                {
+                    return goodTypes[UnityEngine.Random.Range(0, goodTypes.Count)];
+                }
+            }
+
+            return UnityEngine.Random.Range(0, totalTypes);
+        }
+
+        #endregion
+
+        #region Move Validation & Guarantee Combos
+
+        /// <summary>
+        /// Validates whether any legal match-3 move exists on the current board.
+        /// </summary>
+        public bool HasPossibleValidMoves()
+        {
+            for (int x = 0; x < COLUMNS; x++)
+            {
+                for (int y = 0; y < ROWS; y++)
+                {
+                    if (grid[x, y] == null) continue;
+
+                    // Try right swap
+                    if (x < COLUMNS - 1 && grid[x + 1, y] != null)
+                    {
+                        if (WouldSwapFormMatch(x, y, x + 1, y)) return true;
+                    }
+
+                    // Try up swap
+                    if (y < ROWS - 1 && grid[x, y + 1] != null)
+                    {
+                        if (WouldSwapFormMatch(x, y, x, y + 1)) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private bool WouldSwapFormMatch(int x1, int y1, int x2, int y2)
+        {
+            int typeA = grid[x1, y1].TypeId;
+            int typeB = grid[x2, y2].TypeId;
+            if (typeA == typeB) return false;
+
+            return CheckMatchAtVirtual(x2, y2, typeA, x1, y1) || CheckMatchAtVirtual(x1, y1, typeB, x2, y2);
+        }
+
+        private bool CheckMatchAtVirtual(int x, int y, int testType, int ignoreX, int ignoreY)
+        {
+            // Horizontal count
+            int horiz = 1;
+            // Scan left
+            for (int i = x - 1; i >= 0; i--)
+            {
+                if (i == ignoreX && y == ignoreY) break;
+                if (grid[i, y] != null && grid[i, y].TypeId == testType) horiz++;
+                else break;
+            }
+            // Scan right
+            for (int i = x + 1; i < COLUMNS; i++)
+            {
+                if (i == ignoreX && y == ignoreY) break;
+                if (grid[i, y] != null && grid[i, y].TypeId == testType) horiz++;
+                else break;
+            }
+            if (horiz >= 3) return true;
+
+            // Vertical count
+            int vert = 1;
+            // Scan down
+            for (int j = y - 1; j >= 0; j--)
+            {
+                if (x == ignoreX && j == ignoreY) break;
+                if (grid[x, j] != null && grid[x, j].TypeId == testType) vert++;
+                else break;
+            }
+            // Scan up
+            for (int j = y + 1; j < ROWS; j++)
+            {
+                if (x == ignoreX && j == ignoreY) break;
+                if (grid[x, j] != null && grid[x, j].TypeId == testType) vert++;
+                else break;
+            }
+            if (vert >= 3) return true;
+
+            return false;
+        }
+
+        private void EnsureAtLeastOneMoveExists()
+        {
+            // Inject a guaranteed match-pair in center
+            int cx = COLUMNS / 2;
+            int cy = ROWS / 2;
+            int targetType = grid[cx, cy].TypeId;
+
+            // Create a setup: [T, T, Other, T]
+            if (cx < COLUMNS - 3 && grid[cx + 1, cy] != null && grid[cx + 3, cy] != null)
+            {
+                SetTileType(cx + 1, cy, targetType);
+                SetTileType(cx + 3, cy, targetType);
+            }
+        }
+
+        private void SetTileType(int x, int y, int newType)
+        {
+            if (grid[x, y] == null) return;
+            Destroy(grid[x, y].gameObject);
+            SpawnTileAt(x, y, newType, false);
+        }
+
+        private IEnumerator ReshuffleBoardRoutine()
+        {
+            ShowComboBanner("MENGACAK PAPAN...");
+            PlaySound(sfxWhoosh, 0.8f);
+
+            yield return new WaitForSeconds(0.3f);
+
+            // Reshuffle existing tiles
+            List<int> allTypes = new List<int>();
+            for (int x = 0; x < COLUMNS; x++)
+            {
+                for (int y = 0; y < ROWS; y++)
+                {
+                    if (grid[x, y] != null) allTypes.Add(grid[x, y].TypeId);
+                }
+            }
+
+            int attempts = 0;
+            do
+            {
+                attempts++;
+                // Fisher-Yates shuffle
+                for (int i = allTypes.Count - 1; i > 0; i--)
+                {
+                    int k = UnityEngine.Random.Range(0, i + 1);
+                    int temp = allTypes[i];
+                    allTypes[i] = allTypes[k];
+                    allTypes[k] = temp;
+                }
+
+                int idx = 0;
+                for (int x = 0; x < COLUMNS; x++)
+                {
+                    for (int y = 0; y < ROWS; y++)
+                    {
+                        SetTileType(x, y, allTypes[idx++]);
+                    }
+                }
+            }
+            while (!HasPossibleValidMoves() && attempts < 10);
+
+            if (!HasPossibleValidMoves()) EnsureAtLeastOneMoveExists();
+
+            yield return new WaitForSeconds(0.2f);
+            HideComboBanner();
         }
 
         #endregion
@@ -724,6 +998,12 @@ namespace CARE.Gameplay
                 // Process matches, attack enemy, and handle cascades
                 yield return ProcessMatchesAndCascades(matches);
 
+                // Verify valid moves remain on board
+                if (!HasPossibleValidMoves() && TargetCurrentHP > 0 && MovesRemaining > 0)
+                {
+                    yield return ReshuffleBoardRoutine();
+                }
+
                 // Check victory or defeat conditions
                 if (TargetCurrentHP <= 0)
                 {
@@ -731,7 +1011,7 @@ namespace CARE.Gameplay
                 }
                 else if (MovesRemaining <= 0)
                 {
-                    yield return HandleDefeatSequence();
+                    yield return HandleDefeatSequence("⚠️ LANGKAH HABIS!");
                 }
                 else
                 {
@@ -880,7 +1160,7 @@ namespace CARE.Gameplay
 
                 yield return new WaitForSeconds(0.26f);
 
-                // Gravity: drop tiles down
+                // Gravity: drop tiles down with rigged spawner
                 yield return ApplyGravityRoutine();
 
                 // Check for cascading matches
@@ -924,8 +1204,8 @@ namespace CARE.Gameplay
                 for (int i = 0; i < emptyCount; i++)
                 {
                     int spawnY = ROWS - emptyCount + i;
-                    int randomType = UnityEngine.Random.Range(0, currentTileTypes.Count);
-                    SpawnTileAt(x, spawnY, randomType, true);
+                    int chosenType = ChooseTileTypeWithRigging(x, spawnY);
+                    SpawnTileAt(x, spawnY, chosenType, true);
                 }
             }
 
@@ -936,18 +1216,19 @@ namespace CARE.Gameplay
 
         #region Enemy Damage, Hit & Miss Reactions
 
-        /// <summary>
-        /// Triggered when a rocket hits the Boss Hitbox!
-        /// </summary>
         public void OnEnemyHit(int damage, int combo, Vector2 hitPos, Color hitColor)
         {
             if (isEnemyDefeated) return;
 
             PlaySound(sfxHit, 0.95f);
 
+            // Accumulate Total Damage
+            TotalDamageAccumulated += damage;
+
             // Deduct HP
             TargetCurrentHP = Mathf.Max(0, TargetCurrentHP - damage);
             UpdateHPBarUI(false);
+            UpdateHeaderUI();
 
             // Spawn Impact Explosion Particles & Shockwave
             SpawnImpactExplosion(hitPos, hitColor);
@@ -964,24 +1245,18 @@ namespace CARE.Gameplay
                 enemyImage.sprite = enemyEnragedSprite;
             }
 
-            // If Boss defeated by rocket impact, trigger victory immediately
+            // Victory Check
             if (TargetCurrentHP <= 0 && !isEnemyDefeated)
             {
                 StartCoroutine(HandleVictorySequence());
             }
         }
 
-        /// <summary>
-        /// Triggered when a rocket flies past without hitting the Boss Hitbox!
-        /// </summary>
         public void OnEnemyMiss(Vector2 missPos)
         {
             if (isEnemyDefeated) return;
 
-            // Spawn subtle "MISS" text popup
             SpawnFloatingMiss(missPos);
-
-            // Spawn small smoke puff
             SpawnSmokePuff(missPos);
         }
 
@@ -990,7 +1265,7 @@ namespace CARE.Gameplay
             Transform layer = damageTextLayer != null ? damageTextLayer : combatPanel.transform;
             Sprite white = GetWhiteSprite();
 
-            // 1. Expanding Shockwave Ring
+            // Expanding Shockwave Ring
             GameObject ringObj = new GameObject("ImpactShockwave", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             ringObj.transform.SetParent(layer, false);
             RectTransform ringRT = ringObj.GetComponent<RectTransform>();
@@ -1002,7 +1277,7 @@ namespace CARE.Gameplay
             ringImg.raycastTarget = false;
             StartCoroutine(AnimateShockwave(ringRT, ringImg));
 
-            // 2. Radial Spark Particles (8 bursts)
+            // Radial Spark Particles
             int particleCount = 8;
             for (int i = 0; i < particleCount; i++)
             {
@@ -1194,14 +1469,14 @@ namespace CARE.Gameplay
                 txt.text = $"⚡ KRITIKAL! -{damage}";
                 txt.fontSize = 32;
                 txt.fontStyle = FontStyle.Bold;
-                txt.color = new Color(1f, 0.92f, 0.25f, 1f); // Vibrant gold
+                txt.color = new Color(1f, 0.92f, 0.25f, 1f);
             }
             else
             {
                 txt.text = $"💥 -{damage}";
                 txt.fontSize = 28;
                 txt.fontStyle = FontStyle.Bold;
-                txt.color = new Color(1f, 0.35f, 0.35f, 1f); // Bright red
+                txt.color = new Color(1f, 0.35f, 0.35f, 1f);
             }
 
             StartCoroutine(AnimateFloatingText(rt, txt));
@@ -1227,7 +1502,7 @@ namespace CARE.Gameplay
             txt.text = "MELESET!";
             txt.fontSize = 22;
             txt.fontStyle = FontStyle.Bold;
-            txt.color = new Color(0.85f, 0.85f, 0.85f, 0.85f); // Soft grey-white
+            txt.color = new Color(0.85f, 0.85f, 0.85f, 0.85f);
 
             StartCoroutine(AnimateFloatingText(rt, txt));
         }
@@ -1265,13 +1540,13 @@ namespace CARE.Gameplay
         {
             isEnemyDefeated = true;
             isBossMoving = false;
+            IsTimerRunning = false;
             CanPlayerMove = false;
 
             PlaySound(sfxBonus, 1f);
 
             if (hitboxIndicatorObj != null) hitboxIndicatorObj.SetActive(false);
 
-            // Enemy Defeat Animation (shrink & rotate away)
             if (enemyImage != null)
             {
                 float elapsed = 0f;
@@ -1295,8 +1570,14 @@ namespace CARE.Gameplay
                 victoryModal.SetActive(true);
                 if (victoryStatsText != null)
                 {
+                    int totalSec = Mathf.CeilToInt(TimeRemaining);
+                    int mins = totalSec / 60;
+                    int secs = totalSec % 60;
+
                     victoryStatsText.text = $"Target Berhasil Ditumbangkan!\n\n" +
-                                            $"• Sisa Langkah: {MovesRemaining}\n" +
+                                            $"• Total Kerusakan: 💥 {TotalDamageAccumulated:N0} DMG\n" +
+                                            $"• Sisa Langkah: 🎯 {MovesRemaining}/{MaxTurns}\n" +
+                                            $"• Sisa Waktu: ⏱️ {mins:D2}:{secs:D2}\n" +
                                             $"• Total EXP Diperoleh: 🌟 +{Score:N0} EXP\n" +
                                             $"• Combo Maksimal: x{MaxComboReached}\n\n" +
                                             $"Tembakan roket forensik berhasil memukul mundur Doctor Sawit Man!";
@@ -1304,14 +1585,22 @@ namespace CARE.Gameplay
             }
         }
 
-        private IEnumerator HandleDefeatSequence()
+        private IEnumerator HandleTimeOutDefeat()
+        {
+            yield return HandleDefeatSequence("⏱️ WAKTU HABIS!", "Waktu penyelidikan telah habis! Doctor Sawit Man berhasil melarikan diri dari sergapan tim C.A.R.E.");
+        }
+
+        private IEnumerator HandleDefeatSequence(string title = "⚠️ LANGKAH HABIS!", string desc = null)
         {
             CanPlayerMove = false;
+            IsTimerRunning = false;
             yield return new WaitForSeconds(0.4f);
 
             if (defeatModal != null)
             {
                 defeatModal.SetActive(true);
+                if (defeatTitleText != null) defeatTitleText.text = title;
+                if (defeatDescText != null && !string.IsNullOrEmpty(desc)) defeatDescText.text = desc;
             }
         }
 
@@ -1337,18 +1626,46 @@ namespace CARE.Gameplay
         {
             if (stageTitleText != null)
             {
-                stageTitleText.text = $"⚔️ TAHAP {currentStageNumber} - MISI {currentLevelNumber}: {currentLocationName.ToUpper()}";
+                stageTitleText.text = $"⚔️ TAHAP {currentStageNumber} - MISI {currentLevelNumber}";
             }
 
-            if (movesCounterText != null)
+            if (totalDmgText != null)
             {
-                movesCounterText.text = $"🎯 LANGKAH: {MovesRemaining}";
-                movesCounterText.color = MovesRemaining <= 5 ? new Color(1f, 0.35f, 0.35f) : Color.white;
+                totalDmgText.text = $"💥 Total DMG: {TotalDamageAccumulated:N0}";
+            }
+
+            if (turnsText != null)
+            {
+                turnsText.text = $"🎯 Turns: {MovesRemaining}/{MaxTurns}";
+                turnsText.color = MovesRemaining <= 4 ? new Color(1f, 0.35f, 0.35f) : Color.white;
             }
 
             if (scoreText != null)
             {
                 scoreText.text = $"🌟 EXP: {Score:N0}";
+            }
+
+            UpdateTimerUI();
+        }
+
+        private void UpdateTimerUI()
+        {
+            if (timerText != null)
+            {
+                int totalSec = Mathf.CeilToInt(TimeRemaining);
+                int mins = totalSec / 60;
+                int secs = totalSec % 60;
+                timerText.text = $"⏱️ Time: {mins:D2}:{secs:D2}";
+
+                if (TimeRemaining <= 10f)
+                {
+                    float pulse = Mathf.PingPong(Time.time * 6f, 0.45f);
+                    timerText.color = new Color(1f, pulse, pulse);
+                }
+                else
+                {
+                    timerText.color = new Color(1f, 0.92f, 0.25f);
+                }
             }
         }
 

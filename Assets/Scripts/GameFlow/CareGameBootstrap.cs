@@ -670,15 +670,17 @@ namespace CARE.Core
             headerRT.offsetMin = Vector2.zero;
             headerRT.offsetMax = Vector2.zero;
 
-            Text titleText = CreateUIText("LocationTitle", headerBar.transform, "⚔️ AREA INVESTIGASI: TEPI HUTAN", 24, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(40, 0), new Vector2(650, 48));
+            Text titleText = CreateUIText("LocationTitle", headerBar.transform, "⚔️ AREA INVESTIGASI: TEPI HUTAN", 22, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(30, 0), new Vector2(450, 48));
             RectTransform ttRT = titleText.GetComponent<RectTransform>();
             ttRT.anchorMin = new Vector2(0f, 0.5f);
             ttRT.anchorMax = new Vector2(0f, 0.5f);
             ttRT.pivot = new Vector2(0f, 0.5f);
             titleText.alignment = TextAnchor.MiddleLeft;
 
-            Text movesText = CreateUIText("MovesText", headerBar.transform, "🎯 LANGKAH: 24", 22, Color.white, FontStyle.Bold, new Vector2(100, 0), new Vector2(220, 44));
-            Text scoreText = CreateUIText("ScoreText", headerBar.transform, "🌟 EXP: 0", 20, new Color(1f, 0.85f, 0.2f), FontStyle.Bold, new Vector2(330, 0), new Vector2(220, 44));
+            Text totalDmgText = CreateUIText("TotalDmgText", headerBar.transform, "💥 Total DMG: 0", 20, new Color(1f, 0.45f, 0.45f), FontStyle.Bold, new Vector2(-250, 0), new Vector2(210, 44));
+            Text turnsText = CreateUIText("TurnsText", headerBar.transform, "🎯 Turns: 24/24", 20, Color.white, FontStyle.Bold, new Vector2(-40, 0), new Vector2(190, 44));
+            Text timerText = CreateUIText("TimerText", headerBar.transform, "⏱️ Time: 00:30", 20, new Color(0.4f, 0.95f, 0.95f), FontStyle.Bold, new Vector2(160, 0), new Vector2(190, 44));
+            Text scoreText = CreateUIText("ScoreText", headerBar.transform, "🌟 EXP: 0", 19, new Color(1f, 0.85f, 0.2f), FontStyle.Bold, new Vector2(350, 0), new Vector2(180, 44));
 
             Button exitMissionBtn = CreateUIButton("BtnExitMission", headerBar.transform, "⬅️ Keluar Misi", new Vector2(-40, 0), new Vector2(200, 46), new Color(0.45f, 0.22f, 0.22f), () =>
             {
@@ -813,8 +815,8 @@ namespace CARE.Core
             loseCardRT.sizeDelta = new Vector2(760, 480);
             loseCardRT.anchoredPosition = Vector2.zero;
 
-            CreateUIText("LoseTitle", loseCard.transform, "⚠️ LANGKAH HABIS!", 34, new Color(0.95f, 0.3f, 0.3f), FontStyle.Bold, new Vector2(0, 160), new Vector2(700, 50));
-            CreateUIText("LoseDesc", loseCard.transform, "Doctor Sawit Man belum berhasil dipukul mundur.\nAtur kombinasi puzzle dan strategi yang lebih efektif untuk menumbangkannya!", 20, Color.white, FontStyle.Normal, new Vector2(0, 40), new Vector2(660, 120));
+            Text loseTitleText = CreateUIText("LoseTitle", loseCard.transform, "⚠️ LANGKAH HABIS!", 34, new Color(0.95f, 0.3f, 0.3f), FontStyle.Bold, new Vector2(0, 160), new Vector2(700, 50));
+            Text loseDescText = CreateUIText("LoseDesc", loseCard.transform, "Doctor Sawit Man belum berhasil dipukul mundur.\nAtur kombinasi puzzle dan strategi yang lebih efektif untuk menumbangkannya!", 20, Color.white, FontStyle.Normal, new Vector2(0, 40), new Vector2(660, 120));
             Button loseRetryBtn = CreateUIButton("BtnLoseRetry", loseCard.transform, "🔄 COBA LAGI", new Vector2(-160, -140), new Vector2(280, 60), new Color(0.72f, 0.22f, 0.22f), null);
             Button loseExitBtn = CreateUIButton("BtnLoseExit", loseCard.transform, "🗺️ PETA MISI", new Vector2(160, -140), new Vector2(260, 60), new Color(0.3f, 0.35f, 0.4f), null);
             loseModal.SetActive(false);
@@ -828,7 +830,9 @@ namespace CARE.Core
                     projLayerRT,
                     dmgLayerRT,
                     titleText,
-                    movesText,
+                    totalDmgText,
+                    turnsText,
+                    timerText,
                     scoreText,
                     comboText,
                     exitMissionBtn,
@@ -840,6 +844,8 @@ namespace CARE.Core
                     winStatsText,
                     winContinueBtn,
                     loseModal,
+                    loseTitleText,
+                    loseDescText,
                     loseRetryBtn,
                     loseExitBtn
                 );
