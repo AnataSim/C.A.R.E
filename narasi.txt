@@ -1,0 +1,99 @@
+SCENE 01 — HUTAN TERBAKAR
+Latar / visual  Tampilan luas hutan tropis yang terbakar. Asap terlihat di antara pepohonan, sementara beberapa bagian hutan masih tampak hijau di kejauhan.
+Tujuan adegan  Menunjukkan masalah utama yang menjadi latar cerita tanpa membuat adegan terlalu dramatis.
+Catatan visual  Ikuti visual kebakaran pada storyboard. Hindari adegan yang terlalu grafis.
+Audio dasar  BGM: bgm_story_sad.ogg; ambience: amb_forest_fire_loop.ogg; typewriter SFX rendah.
+KOTAK DIALOG 01  |  NARATOR
+“Hutan tropis menjadi tempat hidup bagi berbagai jenis tumbuhan dan satwa. Setiap bagian ekosistem memiliki peran dalam menjaga keseimbangannya.”
+Ekspresi/pose: —   |   Audio: Typewriter SFX aktif; hentikan saat teks selesai.
+Lanjut: Pemain menekan tombol LANJUT untuk membuka kotak dialog berikutnya.
+
+KOTAK DIALOG 02  |  NARATOR
+“Namun, sebagian kawasan hutan kini mengalami kerusakan akibat pembukaan lahan yang tidak bertanggung jawab dan kebakaran.”
+Ekspresi/pose: —   |   Audio: Typewriter SFX aktif; hentikan saat teks selesai.
+Lanjut: Pemain menekan tombol LANJUT untuk membuka kotak dialog berikutnya.
+
+KOTAK DIALOG 03  |  NARATOR
+“Api dan asap mengubah keadaan hutan. Tempat mencari makan, berlindung, dan berkembang biak bagi satwa ikut terancam.”
+Ekspresi/pose: —   |   Audio: Typewriter SFX aktif; hentikan saat teks selesai.
+Lanjut: Pemain menekan tombol LANJUT untuk membuka kotak dialog berikutnya.
+
+SCENE 02 — SATWA TERDAMPAK
+Latar / visual  Tampilan dekat seekor monyet yang tampak ketakutan di antara pepohonan yang terbakar. Satwa lain boleh terlihat samar di latar.
+Tujuan adegan  Menunjukkan dampak kebakaran terhadap satwa.
+Catatan visual  Gunakan ekspresi satwa sesuai storyboard. Satwa tidak berbicara; ekspresi dan efek suara sudah cukup.
+Audio dasar  BGM: bgm_story_sad.ogg; SFX: suara satwa lirih dan ambience api pada volume rendah.
+KOTAK DIALOG 01  |  NARATOR
+“Satwa liar tidak selalu dapat berpindah dengan mudah ketika habitatnya terganggu.”
+Ekspresi/pose: —   |   Audio: Typewriter SFX aktif; hentikan saat teks selesai.
+Lanjut: Pemain menekan tombol LANJUT untuk membuka kotak dialog berikutnya.
+
+KOTAK DIALOG 02  |  NARATOR
+“Sebagian kehilangan tempat berlindung dan sumber makanan. Sebagian lainnya terpaksa menjauh dari wilayah tempat mereka hidup.”
+Ekspresi/pose: —   |   Audio: Typewriter SFX aktif; hentikan saat teks selesai.
+Lanjut: Pemain menekan tombol LANJUT untuk membuka kotak dialog berikutnya.
+
+KOTAK DIALOG 03  |  NARATOR
+“Di antara keadaan tersebut, masih ada satwa yang membutuhkan pertolongan.”
+Ekspresi/pose: —   |   Audio: Typewriter SFX aktif; hentikan saat teks selesai.
+Lanjut: Pemain menekan tombol LANJUT untuk membuka kotak dialog berikutnya.
+
+SCENE 03 — PENJELAJAH TIBA
+Latar / visual  Karakter utama memasuki lokasi dengan topi dan tas penjelajah. Ia mengamati keadaan di sekitarnya.
+Tujuan adegan  Mengenalkan karakter utama dan memulai misi pemain.
+Catatan visual  Karakter berjalan masuk, berhenti, lalu melihat area yang rusak.
+Audio dasar  BGM: bgm_story_sad.ogg; SFX: langkah kaki dan angin.
+KOTAK DIALOG 01  |  NARATOR
+“Seorang penjelajah tiba di kawasan tersebut setelah mengetahui bahwa hutan mengalami kebakaran.”
+Ekspresi/pose: —   |   Audio: Typewriter SFX aktif; hentikan saat teks selesai.
+Lanjut: Pemain menekan tombol LANJUT untuk membuka kotak dialog berikutnya.
+
+KOTAK DIALOG 02  |  PENJELAJAH
+“Kondisi hutan ini lebih parah dari yang kubayangkan. Aku harus memeriksa keadaan di sekitar.”
+Ekspresi/pose: —   |   Audio: Typewriter SFX aktif; hentikan saat teks selesai.
+Lanjut: Pemain menekan tombol LANJUT untuk membuka kotak dialog berikutnya.
+
+KOTAK DIALOG 03  |  PENJELAJAH
+“Pertama, aku perlu memastikan apakah masih ada satwa yang membutuhkan bantuan.”
+Ekspresi/pose: —   |   Audio: Typewriter SFX aktif; hentikan saat teks selesai.
+Lanjut: Pemain menekan tombol LANJUT untuk membuka kotak dialog berikutnya.
+
+SCENE 04 — SATWA TERLUKA DITEMUKAN
+Latar / visual  Penjelajah menemukan seekor satwa di dekat pohon yang terdampak kebakaran. Satwa tampak lemah dan membutuhkan bantuan.
+Tujuan adegan  Menjelaskan alasan karakter mulai menolong satwa.
+Catatan visual  Jangan menampilkan luka secara jelas. Fokus pada ekspresi satwa dan kebutuhan untuk mendapat bantuan.
+Audio dasar  BGM: bgm_story_sad.ogg; SFX: ambience hutan, suara satwa, sfx_soft_interaction.ogg.
+KOTAK DIALOG 01  |  NARATOR
+“Di dekat pepohonan yang rusak, penjelajah menemukan seekor satwa yang masih berada di lokasi.”
+Ekspresi/pose: —   |   Audio: Typewriter SFX aktif; hentikan saat teks selesai.
+Lanjut: Pemain menekan tombol LANJUT untuk membuka kotak dialog berikutnya.
+
+KOTAK DIALOG 02  |  PENJELAJAH
+“Tenang. Aku tidak akan menyakitimu. Aku akan mencari cara agar kamu bisa dibawa ke tempat yang lebih aman.”
+Ekspresi/pose: —   |   Audio: Typewriter SFX aktif; hentikan saat teks selesai.
+Lanjut: Pemain menekan tombol LANJUT untuk membuka kotak dialog berikutnya.
+
+KOTAK DIALOG 03  |  NARATOR
+“Sebelum melanjutkan perjalanan, penjelajah memastikan satwa tersebut mendapat pertolongan yang diperlukan.”
+Ekspresi/pose: —   |   Audio: Typewriter SFX aktif; hentikan saat teks selesai.
+Lanjut: Pemain menekan tombol LANJUT untuk membuka kotak dialog berikutnya.
+
+SCENE 05 — MISI PENYELAMATAN DIMULAI
+Latar / visual  Penjelajah mendekati satwa yang selamat. Pada storyboard, penjelajah dan monyet terlihat berada di tempat yang lebih aman.
+Tujuan adegan  Menetapkan tujuan pemain: menolong satwa, mengumpulkan petunjuk, dan membantu memulihkan habitat.
+Catatan visual  Akhiri adegan cerita dengan perpindahan menuju Lobby Restorasi.
+Audio dasar  BGM berpindah dari bgm_story_sad.ogg ke bgm_restoration_hub.ogg. Tambahkan SFX transisi singkat.
+KOTAK DIALOG 01  |  PENJELAJAH
+“Kamu sudah berada di tempat yang lebih aman. Setelah ini, aku akan mencari tahu apa yang menyebabkan kerusakan di kawasan ini.”
+Ekspresi/pose: —   |   Audio: Typewriter SFX aktif; hentikan saat teks selesai.
+Lanjut: Pemain menekan tombol LANJUT untuk membuka kotak dialog berikutnya.
+
+KOTAK DIALOG 02  |  NARATOR
+“Penjelajah memutuskan untuk membantu satwa yang terdampak sekaligus menelusuri petunjuk di sekitar hutan.”
+Ekspresi/pose: —   |   Audio: Typewriter SFX aktif; hentikan saat teks selesai.
+Lanjut: Pemain menekan tombol LANJUT untuk membuka kotak dialog berikutnya.
+
+KOTAK DIALOG 03  |  NARATOR
+“Perjalanan pemulihan dimulai dari satu lokasi. Setiap petunjuk akan membantu mengungkap keadaan yang sebenarnya.”
+Ekspresi/pose: —   |   Audio: Typewriter SFX aktif; hentikan saat teks selesai.
+Lanjut: Pemain menekan tombol LANJUT untuk membuka kotak dialog berikutnya.

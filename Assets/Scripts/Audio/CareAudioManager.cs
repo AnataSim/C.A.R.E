@@ -136,6 +136,7 @@ namespace CARE.Audio
         public void PlayFireAmbience() => PlayAmbience(ambForestFire);
         public void PlayMorningAmbience() => PlayAmbience(ambTropicalMorning);
         public void PlayItemFoundSFX() => PlaySFX(sfxItemFound);
+        public void PlayWrongClickSFX() => PlaySFX(sfxWrongClick);
         public void PlayTransitionSFX() => PlaySFX(sfxTransition);
         public void PlayLevelClearSFX() => PlaySFX(sfxLevelClear);
         public void PlayStageClearSFX() => PlaySFX(sfxStageClear);

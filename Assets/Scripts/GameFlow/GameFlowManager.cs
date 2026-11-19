@@ -4,6 +4,7 @@ using CARE.Story;
 using CARE.UI;
 using CARE.Gameplay;
 using CARE.Audio;
+using CARE.Data;
 
 namespace CARE.Core
 {
@@ -72,6 +73,13 @@ namespace CARE.Core
             if (CareAudioManager.Instance != null)
             {
                 CareAudioManager.Instance.PlayStorySadBGM();
+                CareAudioManager.Instance.StopAmbience();
+            }
+
+            // Perbarui visual dan interaktivitas tombol Lobby sesuai progress local storage
+            if (CareGameBootstrap.Instance != null)
+            {
+                CareGameBootstrap.Instance.UpdateTitleScreenLobbyButton();
             }
         }
 
@@ -83,6 +91,13 @@ namespace CARE.Core
             currentState = GameState.OpeningStory;
             HideAllScreens();
             if (openingStoryPanel != null) openingStoryPanel.SetActive(true);
+
+            // Audio dasar sesuai narasi.txt: BGM Story Sad + Ambience Forest Fire loop
+            if (CareAudioManager.Instance != null)
+            {
+                CareAudioManager.Instance.PlayStorySadBGM();
+                CareAudioManager.Instance.PlayFireAmbience();
+            }
 
             // Jalankan urutan dialog Scene 01 s/d Scene 05
             List<DialogueLine> fullOpening = new List<DialogueLine>();
@@ -96,7 +111,31 @@ namespace CARE.Core
             {
                 DialogueManager.Instance.StartDialogue(fullOpening, () =>
                 {
-                    // Setelah opening selesai, transisi ke Lobby Restorasi
+                    // Setelah seluruh narasi awal selesai:
+                    // 1. Simpan status bahwa prologue telah selesai ke Local Storage
+                    if (CareSaveManager.Instance != null)
+                    {
+                        CareSaveManager.Instance.SetPrologueCompleted(true);
+                    }
+
+                    // 2. Buka gembok tombol Lobby Restorasi di Title Screen
+                    if (CareGameBootstrap.Instance != null)
+                    {
+                        CareGameBootstrap.Instance.UpdateTitleScreenLobbyButton();
+                        CareGameBootstrap.Instance.UpdateLobbyUI();
+                    }
+
+                    // 3. Audio transition menuju Lobby Restorasi sesuai narasi.txt:
+                    // "BGM berpindah dari bgm_story_sad.ogg ke bgm_restoration_hub.ogg. Tambahkan SFX transisi singkat."
+                    if (CareAudioManager.Instance != null)
+                    {
+                        CareAudioManager.Instance.PlayTransitionSFX();
+                        CareAudioManager.Instance.StopAmbience();
+                        CareAudioManager.Instance.PlayRestorationHubBGM();
+                        CareAudioManager.Instance.PlayMorningAmbience();
+                    }
+
+                    // 4. Masuk ke Lobby Restorasi Utama
                     ShowLobbyRestorasi();
                 });
             }
@@ -322,6 +361,12 @@ namespace CARE.Core
                 {
                     CareAudioManager.Instance.PlayAnimalUnlockSFX();
                 }
+            }
+
+            // Simpan satwa terbuka ke Local Storage
+            if (CareSaveManager.Instance != null)
+            {
+                CareSaveManager.Instance.UnlockAnimal(animalKey);
             }
         }
 

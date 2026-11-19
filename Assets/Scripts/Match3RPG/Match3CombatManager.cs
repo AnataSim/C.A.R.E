@@ -1593,6 +1593,14 @@ namespace CARE.Gameplay
             if (victoryModal != null)
             {
                 victoryModal.SetActive(true);
+
+                // Simpan perolehan EXP dan level ke Local Storage
+                if (CARE.Data.CareSaveManager.Instance != null)
+                {
+                    CARE.Data.CareSaveManager.Instance.AddExp(Score);
+                    CARE.Data.CareSaveManager.Instance.MarkLevelCompleted(currentStageNumber, currentLevelNumber);
+                }
+
                 if (victoryStatsText != null)
                 {
                     int totalSec = Mathf.CeilToInt(TimeRemaining);

@@ -77,9 +77,9 @@ namespace CARE.Story
 
         public static List<DialogueLine> Scene02_SatwaTerdampak = new List<DialogueLine>()
         {
-            new DialogueLine("NARATOR", "Satwa liar tidak selalu dapat berpindah dengan mudah ketika habitatnya terganggu.", "none", "", "Environtment/image 2614"),
-            new DialogueLine("NARATOR", "Sebagian kehilangan tempat berlindung dan sumber makanan. Sebagian lainnya terpaksa menjauh dari wilayah tempat mereka hidup.", "none", "", "Environtment/image 2614"),
-            new DialogueLine("NARATOR", "Di antara keadaan tersebut, masih ada satwa yang membutuhkan pertolongan.", "none", "", "Environtment/image 2614")
+            new DialogueLine("NARATOR", "Satwa liar tidak selalu dapat berpindah dengan mudah ketika habitatnya terganggu.", "monyet", "", "Environtment/image 2614"),
+            new DialogueLine("NARATOR", "Sebagian kehilangan tempat berlindung dan sumber makanan. Sebagian lainnya terpaksa menjauh dari wilayah tempat mereka hidup.", "monyet", "", "Environtment/image 2614"),
+            new DialogueLine("NARATOR", "Di antara keadaan tersebut, masih ada satwa yang membutuhkan pertolongan.", "monyet", "", "Environtment/image 2614")
         };
 
         public static List<DialogueLine> Scene03_PenjelajahTiba = new List<DialogueLine>()

@@ -21,6 +21,7 @@ namespace CARE.UI
         [SerializeField] private Image portraitImage;
         [SerializeField] private GameObject continueIndicator;
         [SerializeField] private Button continueButton;
+        [SerializeField] private Button skipButton;
 
         [Header("Portraits")]
         [SerializeField] private Sprite penjelajahPortrait;
@@ -112,7 +113,7 @@ namespace CARE.UI
             if (dialoguePanel != null) dialoguePanel.SetActive(false);
         }
 
-        public void SetupUI(GameObject panel, Text speaker, Text body, Image portrait, Button btn, GameObject indicator = null, Image bg = null)
+        public void SetupUI(GameObject panel, Text speaker, Text body, Image portrait, Button btn, GameObject indicator = null, Image bg = null, Button skipBtn = null)
         {
             dialoguePanel = panel;
             speakerNameText = speaker;
@@ -120,6 +121,7 @@ namespace CARE.UI
             portraitImage = portrait;
             continueButton = btn;
             continueIndicator = indicator;
+            skipButton = skipBtn;
             if (bg != null) backgroundImage = bg;
             else if (panel != null) backgroundImage = panel.GetComponent<Image>();
 
@@ -128,7 +130,18 @@ namespace CARE.UI
                 continueButton.onClick.RemoveAllListeners();
                 continueButton.onClick.AddListener(OnContinuePressed);
             }
+            if (skipButton != null)
+            {
+                skipButton.onClick.RemoveAllListeners();
+                skipButton.onClick.AddListener(SkipDialogue);
+            }
             if (dialoguePanel != null) dialoguePanel.SetActive(false);
+        }
+
+        public void SkipDialogue()
+        {
+            Debug.Log("[DialogueManager] SkipDialogue dipanggil oleh pemain. Mengakhiri seluruh narasi.");
+            EndDialogue();
         }
 
         public void SetBackground(Sprite bg)
@@ -170,6 +183,11 @@ namespace CARE.UI
             if (speakerNameText != null)
             {
                 speakerNameText.text = line.speaker;
+                if (speakerNameText.transform.parent != null && speakerNameText.transform.parent.name == "SpeakerBadge")
+                {
+                    bool showBadge = !string.IsNullOrEmpty(line.speaker) && line.speaker != "NARATOR";
+                    speakerNameText.transform.parent.gameObject.SetActive(showBadge);
+                }
             }
 
             // Set Background if specified in line
@@ -426,12 +444,16 @@ namespace CARE.UI
 
         private void Update()
         {
-            // Aksesibilitas keyboard (Spasi / Enter untuk lanjut)
+            // Aksesibilitas keyboard (Spasi / Enter untuk lanjut, Escape untuk Skip)
             if (dialoguePanel != null && dialoguePanel.activeSelf)
             {
                 if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
                 {
                     OnContinuePressed();
+                }
+                if (Input.GetKeyDown(KeyCode.Escape))
+                {
+                    SkipDialogue();
                 }
             }
         }

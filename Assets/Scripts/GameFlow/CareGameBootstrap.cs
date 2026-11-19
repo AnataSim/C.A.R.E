@@ -6,6 +6,7 @@ using CARE.Story;
 using CARE.UI;
 using CARE.Gameplay;
 using CARE.Audio;
+using CARE.Data;
 
 namespace CARE.Core
 {
@@ -30,6 +31,13 @@ namespace CARE.Core
         private GameObject bossPanel;
         private GameObject endingPanel;
         private GameObject encyclopediaModal;
+
+        // Title Screen Interactive Buttons
+        private Button titleLobbyButton;
+        private Text titleLobbyButtonText;
+        private Image titleLobbyButtonImage;
+        private Button titlePlayButton;
+        private Text titlePlayButtonText;
 
         // Lobby dynamic UI
         private Text lobbyProgressText;
@@ -69,6 +77,9 @@ namespace CARE.Core
             // Load built-in font safely
             gameFont = GetDefaultFont();
 
+            // Ensure Save Manager (Local Storage)
+            EnsureSaveManager();
+
             // Ensure Audio Manager
             EnsureAudioManager();
 
@@ -107,6 +118,7 @@ namespace CARE.Core
             }
 
             UpdateLobbyUI();
+            UpdateTitleScreenLobbyButton();
         }
 
         private void Update()
@@ -150,6 +162,15 @@ namespace CARE.Core
         }
 
         #region Core Managers Setup
+
+        private void EnsureSaveManager()
+        {
+            if (CareSaveManager.Instance == null)
+            {
+                GameObject saveObj = new GameObject("CareSaveManager");
+                saveObj.AddComponent<CareSaveManager>();
+            }
+        }
 
         private void EnsureAudioManager()
         {
@@ -360,19 +381,33 @@ namespace CARE.Core
                 {
                     Debug.Log("[C.A.R.E.] Tombol Mulai Petualangan diklik!");
                     if (CareAudioManager.Instance != null) CareAudioManager.Instance.PlayTransitionSFX();
-                    if (GameFlowManager.Instance != null) GameFlowManager.Instance.StartOpeningStory();
+                    if (GameFlowManager.Instance != null)
+                    {
+                        // Jika pemain baru (belum menyelesaikan prolog), jalankan narasi pembukaan
+                        if (CareSaveManager.Instance != null && !CareSaveManager.Instance.IsPrologueCompleted)
+                        {
+                            GameFlowManager.Instance.StartOpeningStory();
+                        }
+                        else
+                        {
+                            // Pemain yang sudah menyelesaikan pembukaan langsung menuju Lobby Restorasi
+                            GameFlowManager.Instance.ShowLobbyRestorasi();
+                        }
+                    }
                 });
+
+                titlePlayButton = btn;
+                titlePlayButtonText = playBtn.GetComponentInChildren<Text>();
             }
 
             // 5. Tombol Navigasi Menuju Lobby Restorasi
             Transform existingLobbyBtn = panel.Find("BtnNavLobby");
+            Button lbBtn = null;
             if (existingLobbyBtn == null)
             {
-                Button lbBtn = CreateUIButton("BtnNavLobby", panel, "🐾 LOBBY RESTORASI", new Vector2(0, 0), new Vector2(360, 65), new Color(0.18f, 0.65f, 0.32f), () =>
+                lbBtn = CreateUIButton("BtnNavLobby", panel, "🐾 LOBBY RESTORASI", new Vector2(0, 0), new Vector2(360, 65), new Color(0.18f, 0.65f, 0.32f), () =>
                 {
-                    Debug.Log("[C.A.R.E.] Tombol Lobby Restorasi diklik!");
-                    if (CareAudioManager.Instance != null) CareAudioManager.Instance.PlayTransitionSFX();
-                    if (GameFlowManager.Instance != null) GameFlowManager.Instance.ShowLobbyRestorasi();
+                    OnTitleLobbyButtonClicked();
                 });
                 RectTransform lbRT = lbBtn.GetComponent<RectTransform>();
                 lbRT.anchorMin = new Vector2(0.5f, 0.23f);
@@ -383,7 +418,23 @@ namespace CARE.Core
             else
             {
                 existingLobbyBtn.SetAsLastSibling();
+                lbBtn = existingLobbyBtn.GetComponent<Button>();
+                if (lbBtn == null) lbBtn = existingLobbyBtn.gameObject.AddComponent<Button>();
+                lbBtn.onClick.RemoveAllListeners();
+                lbBtn.onClick.AddListener(() =>
+                {
+                    OnTitleLobbyButtonClicked();
+                });
             }
+
+            titleLobbyButton = lbBtn;
+            if (lbBtn != null)
+            {
+                titleLobbyButtonImage = lbBtn.GetComponent<Image>();
+                titleLobbyButtonText = lbBtn.GetComponentInChildren<Text>();
+            }
+
+            UpdateTitleScreenLobbyButton();
         }
 
         private GameObject BuildTitlePanel(Transform parent)
@@ -406,25 +457,109 @@ namespace CARE.Core
             }
 
             // Tombol Mulai dengan gaya gradien emas-oranye sesuai desain Figma
-            CreateUIButton("BtnPlay", panel.transform, "▶ MULAI PETUALANGAN", new Vector2(0, -180), new Vector2(440, 75), new Color(0.96f, 0.72f, 0.16f), () =>
+            Button playBtnObj = CreateUIButton("BtnPlay", panel.transform, "▶ MULAI PETUALANGAN", new Vector2(0, -180), new Vector2(440, 75), new Color(0.96f, 0.72f, 0.16f), () =>
             {
-                if (GameFlowManager.Instance != null) GameFlowManager.Instance.StartOpeningStory();
+                if (CareAudioManager.Instance != null) CareAudioManager.Instance.PlayTransitionSFX();
+                if (GameFlowManager.Instance != null)
+                {
+                    if (CareSaveManager.Instance != null && !CareSaveManager.Instance.IsPrologueCompleted)
+                    {
+                        GameFlowManager.Instance.StartOpeningStory();
+                    }
+                    else
+                    {
+                        GameFlowManager.Instance.ShowLobbyRestorasi();
+                    }
+                }
             });
+            titlePlayButton = playBtnObj;
+            titlePlayButtonText = playBtnObj.GetComponentInChildren<Text>();
 
             // Tombol Lobby Restorasi
-            CreateUIButton("BtnLobby", panel.transform, "🐾 LOBBY RESTORASI", new Vector2(0, -270), new Vector2(400, 65), new Color(0.18f, 0.65f, 0.32f), () =>
+            Button lobbyBtnObj = CreateUIButton("BtnLobby", panel.transform, "🐾 LOBBY RESTORASI", new Vector2(0, -270), new Vector2(400, 65), new Color(0.18f, 0.65f, 0.32f), () =>
             {
-                if (GameFlowManager.Instance != null) GameFlowManager.Instance.ShowLobbyRestorasi();
+                OnTitleLobbyButtonClicked();
             });
+            titleLobbyButton = lobbyBtnObj;
+            titleLobbyButtonImage = lobbyBtnObj.GetComponent<Image>();
+            titleLobbyButtonText = lobbyBtnObj.GetComponentInChildren<Text>();
+
+            UpdateTitleScreenLobbyButton();
 
             return panel;
+        }
+
+        private void OnTitleLobbyButtonClicked()
+        {
+            bool isUnlocked = CareSaveManager.Instance != null && CareSaveManager.Instance.IsPrologueCompleted;
+            if (isUnlocked)
+            {
+                Debug.Log("[C.A.R.E.] Tombol Lobby Restorasi diklik! Membuka Lobby.");
+                if (CareAudioManager.Instance != null) CareAudioManager.Instance.PlayTransitionSFX();
+                if (GameFlowManager.Instance != null) GameFlowManager.Instance.ShowLobbyRestorasi();
+            }
+            else
+            {
+                Debug.Log("[C.A.R.E.] Tombol Lobby Restorasi terkunci. Pemain harus menyelesaikan narasi awal terlebih dahulu!");
+                if (CareAudioManager.Instance != null) CareAudioManager.Instance.PlayWrongClickSFX();
+            }
+        }
+
+        /// <summary>
+        /// Mengatur apakah tombol Lobby di Title Screen aktif atau terkunci.
+        /// Jika user baru pertama kali buka game (belum tamat narasi awal), tombol ini TIDAK BISA DI-KLIK (interactable = false)
+        /// dan berwarna abu-abu gelap dengan teks terkunci.
+        /// </summary>
+        public void UpdateTitleScreenLobbyButton()
+        {
+            if (titleLobbyButton == null) return;
+
+            bool isUnlocked = CareSaveManager.Instance != null && CareSaveManager.Instance.IsPrologueCompleted;
+
+            if (titleLobbyButtonText == null) titleLobbyButtonText = titleLobbyButton.GetComponentInChildren<Text>();
+            if (titleLobbyButtonImage == null) titleLobbyButtonImage = titleLobbyButton.GetComponent<Image>();
+
+            if (isUnlocked)
+            {
+                // Terbuka: Aktif, berwarna hijau cerah, dan bisa diklik
+                titleLobbyButton.interactable = true;
+                if (titleLobbyButtonText != null)
+                {
+                    titleLobbyButtonText.text = "🐾 LOBBY RESTORASI";
+                    titleLobbyButtonText.color = Color.white;
+                }
+                if (titleLobbyButtonImage != null)
+                {
+                    titleLobbyButtonImage.color = new Color(0.18f, 0.65f, 0.32f, 1f);
+                }
+            }
+            else
+            {
+                // Terkunci bagi pemain baru: tidak bisa diklik sama sekali (interactable = false)
+                titleLobbyButton.interactable = false;
+                if (titleLobbyButtonText != null)
+                {
+                    titleLobbyButtonText.text = "🔒 LOBBY RESTORASI (Terkunci)";
+                    titleLobbyButtonText.color = new Color(0.7f, 0.7f, 0.7f, 0.65f);
+                }
+                if (titleLobbyButtonImage != null)
+                {
+                    titleLobbyButtonImage.color = new Color(0.24f, 0.28f, 0.25f, 0.85f);
+                }
+            }
+
+            // Update teks tombol Play jika sudah menyelesaikan prolog
+            if (titlePlayButtonText != null)
+            {
+                titlePlayButtonText.text = isUnlocked ? "▶ LANJUTKAN PETUALANGAN" : "▶ MULAI PETUALANGAN";
+            }
         }
 
         private GameObject BuildDialoguePanel(Transform parent)
         {
             GameObject panel = CreateFullScreenPanel("DialoguePanel", parent, new Color(0.05f, 0.08f, 0.06f, 0.96f));
 
-            // Background scenery art if available
+            // Background scenery art if available (default hutan terbakar)
             Image bgImg = panel.GetComponent<Image>();
             Sprite forestBg = Resources.Load<Sprite>("Environtment/image 2614");
             if (forestBg != null)
@@ -433,58 +568,129 @@ namespace CARE.Core
                 bgImg.color = Color.white;
             }
 
-            // Large Portrait (Left/Center)
+            // Top-Right SKIP Button (sesuai referensi Figma / Image 2)
+            GameObject skipObj = new GameObject("BtnSkipStory");
+            skipObj.transform.SetParent(panel.transform, false);
+            RectTransform skipRT = skipObj.AddComponent<RectTransform>();
+            skipRT.anchorMin = new Vector2(1f, 1f);
+            skipRT.anchorMax = new Vector2(1f, 1f);
+            skipRT.pivot = new Vector2(1f, 1f);
+            skipRT.anchoredPosition = new Vector2(-40f, -30f);
+            skipRT.sizeDelta = new Vector2(130f, 52f);
+
+            Image skipImg = skipObj.AddComponent<Image>();
+            skipImg.color = new Color(0.14f, 0.12f, 0.12f, 0.94f);
+            skipImg.raycastTarget = true;
+
+            Button skipBtn = skipObj.AddComponent<Button>();
+            skipBtn.targetGraphic = skipImg;
+            ColorBlock sColors = skipBtn.colors;
+            sColors.normalColor = new Color(0.14f, 0.12f, 0.12f, 0.94f);
+            sColors.highlightedColor = new Color(0.35f, 0.20f, 0.20f, 1f);
+            sColors.pressedColor = new Color(0.08f, 0.06f, 0.06f, 1f);
+            skipBtn.colors = sColors;
+
+            Text skipTxt = CreateUIText("Label", skipObj.transform, "SKIP", 26, Color.white, FontStyle.Bold, Vector2.zero, new Vector2(130, 52));
+            skipTxt.alignment = TextAnchor.MiddleCenter;
+            skipTxt.raycastTarget = false;
+
+            // Large Portrait (Left/Center untuk dialog karakter)
             GameObject portraitObj = new GameObject("PortraitImage");
             portraitObj.transform.SetParent(panel.transform, false);
             RectTransform portraitRT = portraitObj.AddComponent<RectTransform>();
-            portraitRT.anchorMin = new Vector2(0.06f, 0.32f);
-            portraitRT.anchorMax = new Vector2(0.36f, 0.92f);
+            portraitRT.anchorMin = new Vector2(0.07f, 0.38f);
+            portraitRT.anchorMax = new Vector2(0.32f, 0.90f);
             portraitRT.offsetMin = Vector2.zero;
             portraitRT.offsetMax = Vector2.zero;
             Image portraitImg = portraitObj.AddComponent<Image>();
             portraitImg.preserveAspect = true;
+            portraitImg.raycastTarget = false;
+            portraitObj.SetActive(false);
 
-            // Dialogue Box (Bottom Full-Width)
-            GameObject boxObj = CreateUIBox("DialogueBox", panel.transform, new Color(0.08f, 0.12f, 0.1f, 0.95f));
-            RectTransform boxRT = boxObj.GetComponent<RectTransform>();
-            boxRT.anchorMin = new Vector2(0.04f, 0.04f);
-            boxRT.anchorMax = new Vector2(0.96f, 0.32f);
-            boxRT.offsetMin = Vector2.zero;
-            boxRT.offsetMax = Vector2.zero;
+            // Dialogue Card Border (Kotak luar dengan aksen merah koral)
+            GameObject cardBorderObj = CreateUIBox("DialogueCardBorder", panel.transform, new Color(0.85f, 0.40f, 0.36f, 1f));
+            RectTransform cardBorderRT = cardBorderObj.GetComponent<RectTransform>();
+            cardBorderRT.anchorMin = new Vector2(0.07f, 0.06f);
+            cardBorderRT.anchorMax = new Vector2(0.93f, 0.36f);
+            cardBorderRT.offsetMin = Vector2.zero;
+            cardBorderRT.offsetMax = Vector2.zero;
 
-            // Speaker Nameplate
-            Text speakerText = CreateUIText("SpeakerName", boxObj.transform, "NARATOR", 28, new Color(0.98f, 0.82f, 0.28f), FontStyle.Bold, new Vector2(30, -30), new Vector2(600, 45));
-            RectTransform spkRT = speakerText.GetComponent<RectTransform>();
-            spkRT.anchorMin = new Vector2(0f, 1f);
-            spkRT.anchorMax = new Vector2(0f, 1f);
-            spkRT.pivot = new Vector2(0f, 1f);
-            speakerText.alignment = TextAnchor.MiddleLeft;
+            // Dialogue Card Fill (Kartu putih bersih di dalam border)
+            GameObject cardFillObj = CreateUIBox("DialogueCardFill", cardBorderObj.transform, Color.white);
+            RectTransform cardFillRT = cardFillObj.GetComponent<RectTransform>();
+            cardFillRT.anchorMin = Vector2.zero;
+            cardFillRT.anchorMax = Vector2.one;
+            cardFillRT.offsetMin = new Vector2(4f, 4f);
+            cardFillRT.offsetMax = new Vector2(-4f, -4f);
+            Image cardFillImg = cardFillObj.GetComponent<Image>();
+            cardFillImg.raycastTarget = true;
 
-            // Dialogue Body Text
-            Text bodyText = CreateUIText("DialogueBody", boxObj.transform, "Menyiapkan narasi...", 24, Color.white, FontStyle.Normal, new Vector2(30, -85), new Vector2(1000, 160));
-            RectTransform bodyRT = bodyText.GetComponent<RectTransform>();
-            bodyRT.anchorMin = new Vector2(0f, 1f);
-            bodyRT.anchorMax = new Vector2(1f, 0f);
-            bodyRT.pivot = new Vector2(0f, 1f);
-            bodyRT.offsetMin = new Vector2(35, 25);
-            bodyRT.offsetMax = new Vector2(-35, -80);
-            bodyText.alignment = TextAnchor.UpperLeft;
+            // Speaker Badge (Tag nama pembicara jika bukan narator murni)
+            GameObject speakerBadgeObj = CreateUIBox("SpeakerBadge", cardBorderObj.transform, new Color(0.28f, 0.10f, 0.10f, 0.95f));
+            RectTransform spkBadgeRT = speakerBadgeObj.GetComponent<RectTransform>();
+            spkBadgeRT.anchorMin = new Vector2(0f, 1f);
+            spkBadgeRT.anchorMax = new Vector2(0f, 1f);
+            spkBadgeRT.pivot = new Vector2(0f, 0f);
+            spkBadgeRT.anchoredPosition = new Vector2(15f, 6f);
+            spkBadgeRT.sizeDelta = new Vector2(240f, 40f);
 
-            // Continue Indicator
-            Text continueIndicator = CreateUIText("ContinueIndicator", boxObj.transform, "Tekan [SPASI] atau Klik untuk lanjut ▶", 20, new Color(0.7f, 0.95f, 0.7f), FontStyle.Italic, new Vector2(-30, 25), new Vector2(450, 35));
-            RectTransform ciRT = continueIndicator.GetComponent<RectTransform>();
-            ciRT.anchorMin = new Vector2(1f, 0f);
-            ciRT.anchorMax = new Vector2(1f, 0f);
-            ciRT.pivot = new Vector2(1f, 0f);
-            continueIndicator.alignment = TextAnchor.MiddleRight;
+            Text speakerText = CreateUIText("SpeakerName", speakerBadgeObj.transform, "NARATOR", 20, new Color(0.98f, 0.85f, 0.35f, 1f), FontStyle.Bold, Vector2.zero, new Vector2(240, 40));
+            speakerText.alignment = TextAnchor.MiddleCenter;
+            speakerBadgeObj.SetActive(false);
 
-            // Clickable continue button covering the box
-            Button continueBtn = boxObj.AddComponent<Button>();
+            // Dialogue Body Text (Teks cokelat gelap/maroon tebal di dalam kartu putih)
+            GameObject bodyObj = new GameObject("DialogueBody");
+            bodyObj.transform.SetParent(cardFillObj.transform, false);
+            RectTransform bodyRT = bodyObj.AddComponent<RectTransform>();
+            bodyRT.anchorMin = Vector2.zero;
+            bodyRT.anchorMax = Vector2.one;
+            bodyRT.pivot = new Vector2(0.5f, 0.5f);
+            bodyRT.offsetMin = new Vector2(50f, 25f);
+            bodyRT.offsetMax = new Vector2(-90f, -25f);
 
-            // Register with DialogueManager
+            Text bodyText = bodyObj.AddComponent<Text>();
+            bodyText.text = "Menyiapkan narasi...";
+            bodyText.font = gameFont;
+            bodyText.fontSize = 28;
+            bodyText.fontStyle = FontStyle.Bold;
+            bodyText.color = new Color(0.28f, 0.10f, 0.10f, 1f); // #471A1A
+            bodyText.alignment = TextAnchor.MiddleLeft;
+            bodyText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            bodyText.verticalOverflow = VerticalWrapMode.Overflow;
+            bodyText.raycastTarget = false;
+
+            // Continue Indicator (Ikon segitiga merah ▶ di sudut kanan bawah kartu)
+            GameObject indObj = new GameObject("ContinueIndicator");
+            indObj.transform.SetParent(cardFillObj.transform, false);
+            RectTransform indRT = indObj.AddComponent<RectTransform>();
+            indRT.anchorMin = new Vector2(1f, 0f);
+            indRT.anchorMax = new Vector2(1f, 0f);
+            indRT.pivot = new Vector2(1f, 0f);
+            indRT.anchoredPosition = new Vector2(-30f, 25f);
+            indRT.sizeDelta = new Vector2(45f, 45f);
+
+            Text continueIndicator = indObj.AddComponent<Text>();
+            continueIndicator.text = "▶";
+            continueIndicator.font = gameFont;
+            continueIndicator.fontSize = 32;
+            continueIndicator.fontStyle = FontStyle.Bold;
+            continueIndicator.color = new Color(0.88f, 0.20f, 0.20f, 1f);
+            continueIndicator.alignment = TextAnchor.MiddleCenter;
+            continueIndicator.raycastTarget = false;
+
+            // Tombol klik untuk lanjut pada kartu dialog
+            Button continueBtn = cardFillObj.AddComponent<Button>();
+            continueBtn.targetGraphic = cardFillImg;
+            ColorBlock cColors = continueBtn.colors;
+            cColors.normalColor = Color.white;
+            cColors.highlightedColor = new Color(0.98f, 0.98f, 0.98f, 1f);
+            cColors.pressedColor = new Color(0.92f, 0.92f, 0.92f, 1f);
+            continueBtn.colors = cColors;
+
+            // Registrasi komponen ke DialogueManager
             if (DialogueManager.Instance != null)
             {
-                DialogueManager.Instance.SetupUI(panel, speakerText, bodyText, portraitImg, continueBtn, continueIndicator.gameObject, bgImg);
+                DialogueManager.Instance.SetupUI(panel, speakerText, bodyText, portraitImg, continueBtn, continueIndicator.gameObject, bgImg, skipBtn);
             }
 
             panel.SetActive(false);
@@ -537,6 +743,11 @@ namespace CARE.Core
             CreateUIButton("BtnEnsiklopediaAll", panel.transform, "📖 ENSIKLOPEDIA", new Vector2(460, -320), new Vector2(240, 58), new Color(0.2f, 0.45f, 0.65f), () =>
             {
                 if (EncyclopediaManager.Instance != null) EncyclopediaManager.Instance.OpenEncyclopedia("rusa_timor");
+            });
+
+            CreateUIButton("BtnReplayPrologue", panel.transform, "📜 BACA ULANG CERITA AWAL", new Vector2(0, -395), new Vector2(360, 48), new Color(0.22f, 0.45f, 0.38f), () =>
+            {
+                if (GameFlowManager.Instance != null) GameFlowManager.Instance.StartOpeningStory();
             });
 
             panel.SetActive(false);
