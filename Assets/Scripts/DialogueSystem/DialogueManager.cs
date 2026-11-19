@@ -30,6 +30,24 @@ namespace CARE.UI
         [SerializeField] private Sprite monyetPortrait;
         [SerializeField] private Sprite harimauPortrait;
 
+        [Header("Speech Bubble & Avatar Layout")]
+        [SerializeField] private RectTransform cardBorderRT;
+        [SerializeField] private Image cardBorderImage;
+        [SerializeField] private Image cardFillImage;
+        [SerializeField] private Image headAvatarImage;
+        [SerializeField] private Image speechTailImage;
+
+        [Header("Scene Stage Actors")]
+        [SerializeField] private Image stageActorMC;
+        [SerializeField] private Image stageActorAnimal;
+        [SerializeField] private Image stageActorAnimal2;
+
+        [Header("Avatar Heads")]
+        [SerializeField] private Sprite penjelajahHead;
+        [SerializeField] private Sprite sawitManHead;
+        [SerializeField] private Sprite monyetHead;
+        [SerializeField] private Sprite harimauHead;
+
         [Header("Settings")]
         [SerializeField] private float typingSpeed = 0.035f;
         [SerializeField] private AudioClip typewriterSFX;
@@ -95,6 +113,13 @@ namespace CARE.UI
 
             if (harimauPortrait == null) harimauPortrait = Resources.Load<Sprite>("Animalia/HarimauSumateraKesakitan");
             if (harimauPortrait == null) harimauPortrait = Resources.Load<Sprite>("TemporaryAssets/Characters/harimau_terdampak");
+
+            // Auto-load avatar head sprites ("ada kepala gitu")
+            if (penjelajahHead == null) penjelajahHead = Resources.Load<Sprite>("Character/mc_head");
+            if (penjelajahHead == null) penjelajahHead = Resources.Load<Sprite>("TemporaryAssets/Characters/mc_head");
+            if (sawitManHead == null) sawitManHead = Resources.Load<Sprite>("TemporaryAssets/Characters/sawit_man_head");
+            if (monyetHead == null) monyetHead = Resources.Load<Sprite>("Animalia/monyet_head");
+            if (harimauHead == null) harimauHead = Resources.Load<Sprite>("Animalia/harimau_head");
             if (typewriterSFX == null) typewriterSFX = Resources.Load<AudioClip>("Audio/sfx_click");
 
             // Auto-load voice speech tone clips from Resources/Audio/tone/
@@ -162,6 +187,26 @@ namespace CARE.UI
             EndDialogue();
         }
 
+        public void SetupSpeechBubbleUI(
+            RectTransform cardRT,
+            Image cardBorder,
+            Image cardFill,
+            Image headImg,
+            Image tailImg,
+            Image actorMC,
+            Image actorAnimal,
+            Image actorAnimal2)
+        {
+            cardBorderRT = cardRT;
+            cardBorderImage = cardBorder;
+            cardFillImage = cardFill;
+            headAvatarImage = headImg;
+            speechTailImage = tailImg;
+            stageActorMC = actorMC;
+            stageActorAnimal = actorAnimal;
+            stageActorAnimal2 = actorAnimal2;
+        }
+
         public void SetBackground(Sprite bg)
         {
             if (backgroundImage != null && bg != null)
@@ -203,13 +248,23 @@ namespace CARE.UI
                 speakerNameText.text = line.speaker;
                 if (speakerNameText.transform.parent != null && speakerNameText.transform.parent.name == "SpeakerBadge")
                 {
-                    bool showBadge = !string.IsNullOrEmpty(line.speaker) && line.speaker != "NARATOR";
+                    bool showBadge = !string.IsNullOrEmpty(line.speaker) && line.speaker != "NARATOR" && line.backgroundKey != "color_maroon";
                     speakerNameText.transform.parent.gameObject.SetActive(showBadge);
                 }
             }
 
-            // Set Background if specified in line
-            if (!string.IsNullOrEmpty(line.backgroundKey))
+            bool isMaroon = (line.backgroundKey == "color_maroon");
+
+            // Background handling
+            if (isMaroon)
+            {
+                if (backgroundImage != null)
+                {
+                    backgroundImage.sprite = null;
+                    backgroundImage.color = new Color(0.13f, 0.04f, 0.04f, 1f); // #210909 dark maroon
+                }
+            }
+            else if (!string.IsNullOrEmpty(line.backgroundKey))
             {
                 string bgKey = line.backgroundKey;
                 if (bgKey.EndsWith(".png") || bgKey.EndsWith(".jpg") || bgKey.EndsWith(".jpeg"))
@@ -231,8 +286,107 @@ namespace CARE.UI
                 }
             }
 
-            // Set Portrait
-            if (portraitImage != null)
+            // Head Avatar handling ("ada kepala gitu")
+            bool hasHead = !isMaroon && !string.IsNullOrEmpty(line.portraitKey) && line.portraitKey != "none" && line.speaker != "NARATOR";
+            if (headAvatarImage != null)
+            {
+                if (hasHead)
+                {
+                    headAvatarImage.gameObject.SetActive(true);
+                    if (line.portraitKey == "penjelajah") headAvatarImage.sprite = penjelajahHead != null ? penjelajahHead : penjelajahPortrait;
+                    else if (line.portraitKey == "sawit_man") headAvatarImage.sprite = sawitManHead != null ? sawitManHead : sawitManPortrait;
+                    else if (line.portraitKey == "monyet") headAvatarImage.sprite = monyetHead != null ? monyetHead : monyetPortrait;
+                    else if (line.portraitKey == "harimau") headAvatarImage.sprite = harimauHead != null ? harimauHead : harimauPortrait;
+                }
+                else
+                {
+                    headAvatarImage.gameObject.SetActive(false);
+                }
+            }
+
+            // Speech Bubble Pointer Tail
+            if (speechTailImage != null)
+            {
+                speechTailImage.gameObject.SetActive(hasHead);
+            }
+
+            // Positioning of Speech Card and Head Avatar (Top vs Bottom vs Center)
+            if (cardBorderRT != null)
+            {
+                if (isMaroon)
+                {
+                    // Center Card: Borderless, centered text on dark maroon
+                    cardBorderRT.anchorMin = new Vector2(0.10f, 0.30f);
+                    cardBorderRT.anchorMax = new Vector2(0.90f, 0.70f);
+                    cardBorderRT.offsetMin = Vector2.zero;
+                    cardBorderRT.offsetMax = Vector2.zero;
+
+                    if (cardBorderImage != null) cardBorderImage.color = Color.clear;
+                    if (cardFillImage != null) cardFillImage.color = Color.clear;
+
+                    if (dialogueBodyText != null)
+                    {
+                        dialogueBodyText.color = Color.white;
+                        dialogueBodyText.alignment = TextAnchor.MiddleCenter;
+                        dialogueBodyText.fontSize = (line.text == "PERJALANAN DIMULAI!") ? 54 : 36;
+                    }
+                }
+                else
+                {
+                    if (cardBorderImage != null) cardBorderImage.color = new Color(0.88f, 0.48f, 0.48f, 1f); // soft reddish border
+                    if (cardFillImage != null) cardFillImage.color = Color.white; // pure white card
+
+                    if (dialogueBodyText != null)
+                    {
+                        dialogueBodyText.color = new Color(0.24f, 0.09f, 0.08f, 1f); // #3E1814 dark maroon
+                        dialogueBodyText.alignment = TextAnchor.MiddleLeft;
+                        dialogueBodyText.fontSize = 32;
+                    }
+
+                    if (line.cardPosition == "top")
+                    {
+                        // Speech Bubble at TOP (so it doesn't cover animals on the ground)
+                        cardBorderRT.anchorMin = new Vector2(hasHead ? 0.22f : 0.05f, 0.63f);
+                        cardBorderRT.anchorMax = new Vector2(0.95f, 0.94f);
+                        cardBorderRT.offsetMin = Vector2.zero;
+                        cardBorderRT.offsetMax = Vector2.zero;
+
+                        if (headAvatarImage != null)
+                        {
+                            RectTransform hRT = headAvatarImage.rectTransform;
+                            hRT.anchorMin = new Vector2(0.04f, 0.63f);
+                            hRT.anchorMax = new Vector2(0.20f, 0.94f);
+                            hRT.offsetMin = Vector2.zero;
+                            hRT.offsetMax = Vector2.zero;
+                        }
+                    }
+                    else
+                    {
+                        // Speech Bubble at BOTTOM (Scene 01, Scene 03)
+                        cardBorderRT.anchorMin = new Vector2(hasHead ? 0.22f : 0.05f, 0.06f);
+                        cardBorderRT.anchorMax = new Vector2(0.95f, 0.37f);
+                        cardBorderRT.offsetMin = Vector2.zero;
+                        cardBorderRT.offsetMax = Vector2.zero;
+
+                        if (headAvatarImage != null)
+                        {
+                            RectTransform hRT = headAvatarImage.rectTransform;
+                            hRT.anchorMin = new Vector2(0.04f, 0.06f);
+                            hRT.anchorMax = new Vector2(0.20f, 0.37f);
+                            hRT.offsetMin = Vector2.zero;
+                            hRT.offsetMax = Vector2.zero;
+                        }
+                    }
+                }
+            }
+
+            // Stage Actors (Chibi MC, Harimau, Monyet/Orangutan in scene)
+            if (stageActorMC != null) stageActorMC.gameObject.SetActive(!isMaroon && (line.stageActor == "mc" || line.stageActor == "both"));
+            if (stageActorAnimal != null) stageActorAnimal.gameObject.SetActive(!isMaroon && (line.stageActor == "animal" || line.stageActor == "both"));
+            if (stageActorAnimal2 != null) stageActorAnimal2.gameObject.SetActive(!isMaroon && (line.stageActor == "both"));
+
+            // Classic Full Portrait fallback if head avatar is not used
+            if (portraitImage != null && headAvatarImage == null)
             {
                 if (line.portraitKey == "penjelajah" && penjelajahPortrait != null)
                 {

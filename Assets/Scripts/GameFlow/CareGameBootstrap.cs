@@ -651,7 +651,66 @@ namespace CARE.Core
             skipTxt.alignment = TextAnchor.MiddleCenter;
             skipTxt.raycastTarget = false;
 
-            // Large Portrait (Left/Center untuk dialog karakter)
+            // Stage Actor: Chibi MC Penjelajah di tengah panggung cerita
+            GameObject actorMCObj = new GameObject("StageActorMC");
+            actorMCObj.transform.SetParent(panel.transform, false);
+            RectTransform actorMCRT = actorMCObj.AddComponent<RectTransform>();
+            actorMCRT.anchorMin = new Vector2(0.5f, 0.40f);
+            actorMCRT.anchorMax = new Vector2(0.5f, 0.40f);
+            actorMCRT.pivot = new Vector2(0.5f, 0.5f);
+            actorMCRT.anchoredPosition = Vector2.zero;
+            actorMCRT.sizeDelta = new Vector2(340f, 460f);
+            Image actorMCImg = actorMCObj.AddComponent<Image>();
+            actorMCImg.sprite = Resources.Load<Sprite>("Character/Karakter_Utama");
+            actorMCImg.preserveAspect = true;
+            actorMCImg.raycastTarget = false;
+            actorMCObj.SetActive(false);
+
+            // Stage Actor: Satwa Terluka Harimau di kanan bawah
+            GameObject actorAnimalObj = new GameObject("StageActorAnimal");
+            actorAnimalObj.transform.SetParent(panel.transform, false);
+            RectTransform actorAnimalRT = actorAnimalObj.AddComponent<RectTransform>();
+            actorAnimalRT.anchorMin = new Vector2(0.72f, 0.23f);
+            actorAnimalRT.anchorMax = new Vector2(0.72f, 0.23f);
+            actorAnimalRT.pivot = new Vector2(0.5f, 0.5f);
+            actorAnimalRT.anchoredPosition = Vector2.zero;
+            actorAnimalRT.sizeDelta = new Vector2(460f, 300f);
+            Image actorAnimalImg = actorAnimalObj.AddComponent<Image>();
+            actorAnimalImg.sprite = Resources.Load<Sprite>("Animalia/HarimauSumateraKesakitan");
+            actorAnimalImg.preserveAspect = true;
+            actorAnimalImg.raycastTarget = false;
+            actorAnimalObj.SetActive(false);
+
+            // Stage Actor 2: Satwa Terluka Monyet di kiri bawah
+            GameObject actorAnimal2Obj = new GameObject("StageActorAnimal2");
+            actorAnimal2Obj.transform.SetParent(panel.transform, false);
+            RectTransform actorAnimal2RT = actorAnimal2Obj.AddComponent<RectTransform>();
+            actorAnimal2RT.anchorMin = new Vector2(0.28f, 0.24f);
+            actorAnimal2RT.anchorMax = new Vector2(0.28f, 0.24f);
+            actorAnimal2RT.pivot = new Vector2(0.5f, 0.5f);
+            actorAnimal2RT.anchoredPosition = Vector2.zero;
+            actorAnimal2RT.sizeDelta = new Vector2(300f, 360f);
+            Image actorAnimal2Img = actorAnimal2Obj.AddComponent<Image>();
+            actorAnimal2Img.sprite = Resources.Load<Sprite>("Animalia/MonyetKesakitan");
+            actorAnimal2Img.preserveAspect = true;
+            actorAnimal2Img.raycastTarget = false;
+            actorAnimal2Obj.SetActive(false);
+
+            // Head Avatar Karakter di samping balon dialog ("ada kepala gitu")
+            GameObject headObj = new GameObject("HeadAvatar");
+            headObj.transform.SetParent(panel.transform, false);
+            RectTransform headRT = headObj.AddComponent<RectTransform>();
+            headRT.anchorMin = new Vector2(0.04f, 0.06f);
+            headRT.anchorMax = new Vector2(0.20f, 0.37f);
+            headRT.offsetMin = Vector2.zero;
+            headRT.offsetMax = Vector2.zero;
+            Image headImg = headObj.AddComponent<Image>();
+            headImg.sprite = Resources.Load<Sprite>("Character/mc_head");
+            headImg.preserveAspect = true;
+            headImg.raycastTarget = false;
+            headObj.SetActive(false);
+
+            // Large Portrait (Fallback jika diperlukan)
             GameObject portraitObj = new GameObject("PortraitImage");
             portraitObj.transform.SetParent(panel.transform, false);
             RectTransform portraitRT = portraitObj.AddComponent<RectTransform>();
@@ -664,13 +723,30 @@ namespace CARE.Core
             portraitImg.raycastTarget = false;
             portraitObj.SetActive(false);
 
-            // Dialogue Card Border (Kotak luar dengan aksen merah koral)
-            GameObject cardBorderObj = CreateUIBox("DialogueCardBorder", panel.transform, new Color(0.85f, 0.40f, 0.36f, 1f));
+            // Dialogue Card Border (Kotak luar dengan aksen merah lembut/pink)
+            GameObject cardBorderObj = CreateUIBox("DialogueCardBorder", panel.transform, new Color(0.88f, 0.48f, 0.48f, 1f));
             RectTransform cardBorderRT = cardBorderObj.GetComponent<RectTransform>();
-            cardBorderRT.anchorMin = new Vector2(0.07f, 0.06f);
-            cardBorderRT.anchorMax = new Vector2(0.93f, 0.36f);
+            cardBorderRT.anchorMin = new Vector2(0.06f, 0.06f);
+            cardBorderRT.anchorMax = new Vector2(0.94f, 0.36f);
             cardBorderRT.offsetMin = Vector2.zero;
             cardBorderRT.offsetMax = Vector2.zero;
+            Image cardBorderImg = cardBorderObj.GetComponent<Image>();
+
+            // Ekor Balon Dialog (Speech Bubble Pointer Tail menunjuk ke kepala)
+            GameObject tailObj = new GameObject("SpeechTail");
+            tailObj.transform.SetParent(cardBorderObj.transform, false);
+            RectTransform tailRT = tailObj.AddComponent<RectTransform>();
+            tailRT.anchorMin = new Vector2(0f, 0.5f);
+            tailRT.anchorMax = new Vector2(0f, 0.5f);
+            tailRT.pivot = new Vector2(1f, 0.5f);
+            tailRT.anchoredPosition = new Vector2(4f, 0f);
+            tailRT.sizeDelta = new Vector2(28f, 36f);
+            Image tailImg = tailObj.AddComponent<Image>();
+            tailImg.sprite = Resources.Load<Sprite>("UI/speech_tail");
+            tailImg.color = Color.white;
+            tailImg.preserveAspect = true;
+            tailImg.raycastTarget = false;
+            tailObj.SetActive(false);
 
             // Dialogue Card Fill (Kartu putih bersih di dalam border)
             GameObject cardFillObj = CreateUIBox("DialogueCardFill", cardBorderObj.transform, Color.white);
@@ -748,6 +824,7 @@ namespace CARE.Core
             if (DialogueManager.Instance != null)
             {
                 DialogueManager.Instance.SetupUI(panel, speakerText, bodyText, portraitImg, continueBtn, continueIndicator.gameObject, bgImg, skipBtn);
+                DialogueManager.Instance.SetupSpeechBubbleUI(cardBorderRT, cardBorderImg, cardFillImg, headImg, tailImg, actorMCImg, actorAnimalImg, actorAnimal2Img);
             }
 
             panel.SetActive(false);
