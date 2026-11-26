@@ -77,6 +77,7 @@ namespace CARE.Core
         private Image dossierTabTaksonomiBg;
         private Text dossierTabDampakText;
         private Text dossierTabTaksonomiText;
+        private Button dossierStartBtn;
         private int dossierSelectedLevel = 1;
         private string dossierSelectedAnimal = "orangutan";
         private int dossierSelectedTab = 0; // 0 = Dampak Karhutla, 1 = Taksonomi & Habitat
