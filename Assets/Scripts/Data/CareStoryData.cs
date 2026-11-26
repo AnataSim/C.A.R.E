@@ -271,6 +271,16 @@ namespace CARE.Story
                 "Gajah Asia merupakan herbivora besar. Makanannya dapat berupa rumput, dahan pohon, ranting, kulit kayu, akar, dan buah.",
                 "Gajah membutuhkan ruang jelajah, air, dan tumbuhan sebagai sumber makanan. Perubahan habitat dapat memengaruhi akses mereka terhadap kebutuhan tersebut.",
                 false // Unlocked after Stage 3
+            ),
+            new AnimalEncyclopediaData(
+                "harimau",
+                "Harimau Sumatera",
+                "Panthera tigris sumatrae",
+                "Kingdom: Animalia\nFilum: Chordata\nKelas: Mammalia\nOrdo: Carnivora\nFamili: Felidae\nGenus: Panthera\nSpesies: Panthera tigris sumatrae",
+                "Hutan hujan tropis dataran rendah hingga kawasan pegunungan di Pulau Sumatera yang membutuhkan kanopi lebat dan tutupan vegetasi utuh.",
+                "Karnivora: Memangsa ungulata seperti rusa timor, babi hutan, kancil, dan tapir.",
+                "Harimau Sumatera merupakan predator puncak yang menjaga keseimbangan populasi satwa rimba. Kerusakan akibat karhutla mempercepat laju kepunahan spesies langka ini.",
+                false // Unlocked after Stage 3 Boss Final
             )
         };
     }

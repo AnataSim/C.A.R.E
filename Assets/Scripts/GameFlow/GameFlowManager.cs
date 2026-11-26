@@ -125,46 +125,46 @@ namespace CARE.Core
                         CareGameBootstrap.Instance.UpdateLobbyUI();
                     }
 
-                    // 3. Audio transition menuju Lobby Restorasi sesuai narasi.txt:
-                    // "BGM berpindah dari bgm_story_sad.ogg ke bgm_restoration_hub.ogg. Tambahkan SFX transisi singkat."
+                    // 3. Audio transition menuju Pilih Levelmu! sesuai desain Figma
                     if (CareAudioManager.Instance != null)
                     {
                         CareAudioManager.Instance.PlayTransitionSFX();
                         CareAudioManager.Instance.StopAmbience();
                         CareAudioManager.Instance.PlayRestorationHubBGM();
-                        CareAudioManager.Instance.PlayMorningAmbience();
                     }
 
-                    // 4. Masuk ke Lobby Restorasi Utama
-                    ShowLobbyRestorasi();
+                    // 4. Masuk ke Layar Pilih Levelmu!
+                    OpenStageMap();
                 });
             }
         }
 
         /// <summary>
-        /// Menampilkan Lobby Restorasi (Habitat Satwa & Ensiklopedia).
+        /// Menampilkan Lobby Restorasi (diarahkan langsung ke Pilih Levelmu! sesuai Figma).
         /// </summary>
         public void ShowLobbyRestorasi()
         {
-            currentState = GameState.LobbyRestorasi;
-            HideAllScreens();
-            if (lobbyRestorasiPanel != null) lobbyRestorasiPanel.SetActive(true);
-
-            if (CareAudioManager.Instance != null)
-            {
-                CareAudioManager.Instance.PlayRestorationHubBGM();
-                CareAudioManager.Instance.PlayMorningAmbience();
-            }
+            OpenStageMap();
         }
 
         /// <summary>
-        /// Dipanggil dari tombol PLAY di Lobby Restorasi untuk membuka Peta Stage.
+        /// Membuka Peta Level ("Pilih Levelmu!" sesuai Figma Frame 1000007219).
         /// </summary>
         public void OpenStageMap()
         {
             currentState = GameState.StageMap;
             HideAllScreens();
             if (stageMapPanel != null) stageMapPanel.SetActive(true);
+
+            if (CareGameBootstrap.Instance != null)
+            {
+                CareGameBootstrap.Instance.UpdateStageMapUI();
+            }
+
+            if (CareAudioManager.Instance != null)
+            {
+                CareAudioManager.Instance.PlayRestorationHubBGM();
+            }
         }
 
         /// <summary>
@@ -301,25 +301,25 @@ namespace CARE.Core
 
             if (stageNumber == 1)
             {
-                UnlockAnimal("rusa_timor");
+                UnlockAnimal("orangutan");
                 ScreenFader.Do(() =>
                 {
-                    if (CareGameBootstrap.Instance != null) CareGameBootstrap.Instance.UpdateLobbyUI();
-                    ShowLobbyRestorasi();
+                    if (CareGameBootstrap.Instance != null) CareGameBootstrap.Instance.UpdateStageMapUI();
+                    OpenStageMap();
                 });
             }
             else if (stageNumber == 2)
             {
-                UnlockAnimal("orangutan");
+                UnlockAnimal("gajah_asia");
                 ScreenFader.Do(() =>
                 {
-                    if (CareGameBootstrap.Instance != null) CareGameBootstrap.Instance.UpdateLobbyUI();
-                    ShowLobbyRestorasi();
+                    if (CareGameBootstrap.Instance != null) CareGameBootstrap.Instance.UpdateStageMapUI();
+                    OpenStageMap();
                 });
             }
             else if (stageNumber == 3)
             {
-                UnlockAnimal("gajah_asia");
+                UnlockAnimal("harimau");
                 ScreenFader.Do(() =>
                 {
                     ShowEnding();

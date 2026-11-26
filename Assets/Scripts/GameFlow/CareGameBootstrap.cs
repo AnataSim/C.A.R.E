@@ -55,6 +55,32 @@ namespace CARE.Core
         private Button bossEvidenceBtn2;
         private Image bossArtImage;
 
+        // Figma "Pilih Levelmu!" References
+        private GameObject level1CardObj;
+        private GameObject level2CardObj;
+        private GameObject level3CardObj;
+        private GameObject level2LockOverlay;
+        private GameObject level3LockOverlay;
+        private Button level2StartBtn;
+        private Button level3StartBtn;
+        private Text level2BtnText;
+        private Text level3BtnText;
+
+        // Figma Animal Dossier Modal References
+        private GameObject dossierModal;
+        private Text dossierCommonNameText;
+        private Text dossierScientificNameText;
+        private Image dossierPreviewImage;
+        private Text dossierStatusText;
+        private Text dossierDescText;
+        private Image dossierTabDampakBg;
+        private Image dossierTabTaksonomiBg;
+        private Text dossierTabDampakText;
+        private Text dossierTabTaksonomiText;
+        private int dossierSelectedLevel = 1;
+        private string dossierSelectedAnimal = "orangutan";
+        private int dossierSelectedTab = 0; // 0 = Dampak Karhutla, 1 = Taksonomi & Habitat
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void AutoInitializeGame()
         {
@@ -123,6 +149,7 @@ namespace CARE.Core
             }
 
             UpdateLobbyUI();
+            UpdateStageMapUI();
             UpdateTitleScreenLobbyButton();
         }
 
@@ -131,18 +158,22 @@ namespace CARE.Core
             // Keyboard shortcuts for smooth testing & accessibility
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                if (encyclopediaModal != null && encyclopediaModal.activeSelf)
+                if (dossierModal != null && dossierModal.activeSelf)
+                {
+                    CloseDossierModal();
+                }
+                else if (encyclopediaModal != null && encyclopediaModal.activeSelf)
                 {
                     EncyclopediaManager.Instance.ClosePanel();
                 }
                 else if (GameFlowManager.Instance != null && GameFlowManager.Instance.currentState != GameState.TitleScreen)
                 {
-                    GameFlowManager.Instance.ShowLobbyRestorasi();
+                    GameFlowManager.Instance.OpenStageMap();
                 }
             }
             else if (Input.GetKeyDown(KeyCode.L))
             {
-                if (GameFlowManager.Instance != null) GameFlowManager.Instance.ShowLobbyRestorasi();
+                if (GameFlowManager.Instance != null) GameFlowManager.Instance.OpenStageMap();
             }
             else if (Input.GetKeyDown(KeyCode.M))
             {
@@ -295,7 +326,10 @@ namespace CARE.Core
             // 8. Encyclopedia Modal
             encyclopediaModal = BuildEncyclopediaModal(mainCanvas.transform);
 
-            // 9. Screen Fader Overlay (Fade-In / Fade-Out Transition)
+            // 9. Animal Dossier Modal (Figma Frame 143:2010 & 143:2768)
+            dossierModal = BuildDossierModal(mainCanvas.transform);
+
+            // 10. Screen Fader Overlay (Fade-In / Fade-Out Transition)
             BuildScreenFader(mainCanvas.transform);
         }
 
@@ -430,8 +464,8 @@ namespace CARE.Core
                         }
                         else
                         {
-                            // Pemain yang sudah menyelesaikan pembukaan langsung menuju Lobby Restorasi
-                            GameFlowManager.Instance.ShowLobbyRestorasi();
+                            // Pemain yang sudah menyelesaikan pembukaan langsung menuju Layar Pilih Levelmu!
+                            GameFlowManager.Instance.OpenStageMap();
                         }
                     }
                 });
@@ -440,39 +474,20 @@ namespace CARE.Core
                 titlePlayButtonText = playBtn.GetComponentInChildren<Text>();
             }
 
-            // 5. Tombol Navigasi Menuju Lobby Restorasi
+            // 5. Hapus tombol procedural lama BtnNavLobby & BtnLobby agar Title Screen bersih seperti desain Figma Frame 1000007196
             Transform existingLobbyBtn = panel.Find("BtnNavLobby");
-            Button lbBtn = null;
-            if (existingLobbyBtn == null)
+            if (existingLobbyBtn != null)
             {
-                lbBtn = CreateUIButton("BtnNavLobby", panel, "🐾 LOBBY RESTORASI", new Vector2(0, 0), new Vector2(360, 65), new Color(0.18f, 0.65f, 0.32f), () =>
-                {
-                    OnTitleLobbyButtonClicked();
-                });
-                RectTransform lbRT = lbBtn.GetComponent<RectTransform>();
-                lbRT.anchorMin = new Vector2(0.5f, 0.23f);
-                lbRT.anchorMax = new Vector2(0.5f, 0.23f);
-                lbRT.pivot = new Vector2(0.5f, 0.5f);
-                lbRT.anchoredPosition = Vector2.zero;
+                Destroy(existingLobbyBtn.gameObject);
             }
-            else
+            Transform existingLobbyBtn2 = panel.Find("BtnLobby");
+            if (existingLobbyBtn2 != null)
             {
-                existingLobbyBtn.SetAsLastSibling();
-                lbBtn = existingLobbyBtn.GetComponent<Button>();
-                if (lbBtn == null) lbBtn = existingLobbyBtn.gameObject.AddComponent<Button>();
-                lbBtn.onClick.RemoveAllListeners();
-                lbBtn.onClick.AddListener(() =>
-                {
-                    OnTitleLobbyButtonClicked();
-                });
+                Destroy(existingLobbyBtn2.gameObject);
             }
-
-            titleLobbyButton = lbBtn;
-            if (lbBtn != null)
-            {
-                titleLobbyButtonImage = lbBtn.GetComponent<Image>();
-                titleLobbyButtonText = lbBtn.GetComponentInChildren<Text>();
-            }
+            titleLobbyButton = null;
+            titleLobbyButtonImage = null;
+            titleLobbyButtonText = null;
 
             UpdateTitleScreenLobbyButton();
         }
@@ -512,7 +527,7 @@ namespace CARE.Core
                 CreateUIText("SubtitleText", panel.transform, "Cegah. Api. Rawat. Ekosistem.", 28, Color.white, FontStyle.Normal, new Vector2(0, 60), new Vector2(900, 60));
             }
 
-            // Tombol Mulai dengan gaya gradien emas-oranye sesuai desain Figma
+            // Tombol Mulai dengan gaya gradien emas-oranye sesuai desain Figma Frame 1000007196
             Button playBtnObj = CreateUIButton("BtnPlay", panel.transform, "▶ MULAI PETUALANGAN", new Vector2(0, -180), new Vector2(440, 75), new Color(0.96f, 0.72f, 0.16f), () =>
             {
                 if (CareAudioManager.Instance != null) CareAudioManager.Instance.PlayTransitionSFX();
@@ -524,21 +539,17 @@ namespace CARE.Core
                     }
                     else
                     {
-                        GameFlowManager.Instance.ShowLobbyRestorasi();
+                        GameFlowManager.Instance.OpenStageMap();
                     }
                 }
             });
             titlePlayButton = playBtnObj;
             titlePlayButtonText = playBtnObj.GetComponentInChildren<Text>();
 
-            // Tombol Lobby Restorasi
-            Button lobbyBtnObj = CreateUIButton("BtnLobby", panel.transform, "🐾 LOBBY RESTORASI", new Vector2(0, -270), new Vector2(400, 65), new Color(0.18f, 0.65f, 0.32f), () =>
-            {
-                OnTitleLobbyButtonClicked();
-            });
-            titleLobbyButton = lobbyBtnObj;
-            titleLobbyButtonImage = lobbyBtnObj.GetComponent<Image>();
-            titleLobbyButtonText = lobbyBtnObj.GetComponentInChildren<Text>();
+            // Hapus tombol Lobby pada Title Screen sesuai desain Figma
+            titleLobbyButton = null;
+            titleLobbyButtonImage = null;
+            titleLobbyButtonText = null;
 
             UpdateTitleScreenLobbyButton();
 
@@ -955,47 +966,476 @@ namespace CARE.Core
 
         private GameObject BuildStageMapPanel(Transform parent)
         {
-            GameObject panel = CreateFullScreenPanel("StageMapPanel", parent, new Color(0.06f, 0.12f, 0.16f, 1f));
+            // Figma Frame 1000007219: Deep Blue Background #035ca0
+            GameObject panel = CreateFullScreenPanel("StageMapPanel", parent, new Color(0.012f, 0.36f, 0.627f, 1f));
 
-            CreateUIText("MapTitle", panel.transform, "PETA EKOSISTEM & MISI PENYELAMATAN", 40, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 420), new Vector2(1300, 50));
-            CreateUIText("MapSubtitle", panel.transform, "Pilih kawasan terdampak untuk memulai investigasi dan rehabilitasi satwa", 20, Color.white, FontStyle.Normal, new Vector2(0, 375), new Vector2(1300, 35));
+            // Top Header: Title "Pilih Levelmu!" in Lilita One font with drop shadow
+            GameObject titleObj = new GameObject("PilihLevelmuTitle", typeof(RectTransform));
+            titleObj.transform.SetParent(panel.transform, false);
+            RectTransform titleRT = titleObj.GetComponent<RectTransform>();
+            titleRT.anchorMin = new Vector2(0.5f, 1f);
+            titleRT.anchorMax = new Vector2(0.5f, 1f);
+            titleRT.pivot = new Vector2(0.5f, 1f);
+            titleRT.anchoredPosition = new Vector2(0, -35);
+            titleRT.sizeDelta = new Vector2(800, 75);
 
-            // Stage 1 Card
-            BuildStageCard(panel.transform, -420, "STAGE 1", "HUTAN DATARAN RENDAH", "Target: Rusa Timor\nInvestigasi Area Hutan Terbakar", 1, new Color(0.18f, 0.55f, 0.3f));
+            Text titleText = titleObj.AddComponent<Text>();
+            titleText.text = "Pilih Levelmu!";
+            titleText.font = gameFont;
+            titleText.fontSize = 54;
+            titleText.fontStyle = FontStyle.Bold;
+            titleText.alignment = TextAnchor.MiddleCenter;
+            titleText.color = Color.white;
+            titleText.raycastTarget = false;
 
-            // Stage 2 Card
-            BuildStageCard(panel.transform, 0, "STAGE 2", "HUTAN RAWA GAMBUT", "Target: Orangutan\nInvestigasi Kanal & Pembalakan Ilegal", 2, new Color(0.55f, 0.4f, 0.15f));
+            Shadow shadow = titleObj.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0.12f, 0.28f, 0.95f);
+            shadow.effectDistance = new Vector2(3f, -4f);
 
-            // Stage 3 Card
-            BuildStageCard(panel.transform, 420, "STAGE 3", "KORIDOR PEGUNUNGAN", "Target: Gajah Asia & Doctor Sawit Man\nEvakuasi & Konfrontasi Terakhir", 3, new Color(0.65f, 0.2f, 0.2f));
+            // Back button on top-left returning to Title Screen
+            GameObject backObj = new GameObject("BtnBackTitle", typeof(RectTransform));
+            backObj.transform.SetParent(panel.transform, false);
+            RectTransform backRT = backObj.AddComponent<RectTransform>();
+            backRT.anchorMin = new Vector2(0f, 1f);
+            backRT.anchorMax = new Vector2(0f, 1f);
+            backRT.pivot = new Vector2(0f, 1f);
+            backRT.anchoredPosition = new Vector2(40, -35);
+            backRT.sizeDelta = new Vector2(65, 65);
 
-            // Back button
-            CreateUIButton("BtnBackLobby", panel.transform, "⬅️ KEMBALI KE LOBBY", new Vector2(0, -320), new Vector2(340, 65), new Color(0.3f, 0.35f, 0.4f), () =>
+            Image backImg = backObj.AddComponent<Image>();
+            backImg.color = new Color(0.01f, 0.18f, 0.32f, 0.92f);
+            backImg.raycastTarget = true;
+
+            Button backBtn = backObj.AddComponent<Button>();
+            backBtn.targetGraphic = backImg;
+            backBtn.onClick.AddListener(() =>
             {
-                if (GameFlowManager.Instance != null) GameFlowManager.Instance.ShowLobbyRestorasi();
+                if (CareAudioManager.Instance != null) CareAudioManager.Instance.PlayTransitionSFX();
+                if (GameFlowManager.Instance != null) GameFlowManager.Instance.ShowTitleScreen();
             });
+
+            GameObject backIcon = new GameObject("BackIcon", typeof(RectTransform));
+            backIcon.transform.SetParent(backObj.transform, false);
+            RectTransform biRT = backIcon.GetComponent<RectTransform>();
+            biRT.anchorMin = Vector2.zero;
+            biRT.anchorMax = Vector2.one;
+            biRT.offsetMin = Vector2.zero;
+            biRT.offsetMax = Vector2.zero;
+            Text biText = backIcon.AddComponent<Text>();
+            biText.text = "⬅";
+            biText.font = gameFont;
+            biText.fontSize = 32;
+            biText.alignment = TextAnchor.MiddleCenter;
+            biText.color = Color.white;
+            biText.raycastTarget = false;
+
+            // Cards Container
+            GameObject cardsContainer = new GameObject("CardsContainer", typeof(RectTransform));
+            cardsContainer.transform.SetParent(panel.transform, false);
+            RectTransform ccRT = cardsContainer.GetComponent<RectTransform>();
+            ccRT.anchorMin = new Vector2(0.5f, 0.5f);
+            ccRT.anchorMax = new Vector2(0.5f, 0.5f);
+            ccRT.pivot = new Vector2(0.5f, 0.5f);
+            ccRT.anchoredPosition = new Vector2(0, -30);
+            ccRT.sizeDelta = new Vector2(1200, 520);
+
+            // 3 Level Cards from Figma Frame 1000007219
+            // Card 1: Level 1 - "Selamatkan Orangutan!"
+            level1CardObj = BuildFigmaLevelCard(cardsContainer.transform, -390, 1, "LEVEL 1", "Selamatkan Orangutan!", "TemporaryAssets/Animals/orangutan", new Color(0.75f, 0.60f, 0.34f), new Color(0.29f, 0.22f, 0.11f), new Color(0f, 0.17f, 0.31f), out _, out _, out _);
+
+            // Card 2: Level 2 - "Selamatkan Gajah Asia!"
+            level2CardObj = BuildFigmaLevelCard(cardsContainer.transform, 0, 2, "LEVEL 2", "Selamatkan Gajah Asia!", "TemporaryAssets/Animals/gajah_asia", new Color(0f, 0.65f, 0.08f), new Color(0f, 0.22f, 0.02f), new Color(0f, 0.17f, 0.31f), out level2LockOverlay, out level2StartBtn, out level2BtnText);
+
+            // Card 3: Level 3 - "Kalahkan Dr. Sawit Man!"
+            level3CardObj = BuildFigmaLevelCard(cardsContainer.transform, 390, 3, "LEVEL 3", "Kalahkan Dr. Sawit Man!", "TemporaryAssets/Characters/doctor_sawit_man", new Color(0.74f, 0f, 0f), new Color(0.22f, 0f, 0f), new Color(0.31f, 0f, 0f), out level3LockOverlay, out level3StartBtn, out level3BtnText);
+
+            UpdateStageMapUI();
 
             panel.SetActive(false);
             return panel;
         }
 
-        private void BuildStageCard(Transform container, float posX, string tag, string title, string desc, int stageNum, Color themeColor)
+        private GameObject BuildFigmaLevelCard(
+            Transform container,
+            float posX,
+            int levelNum,
+            string badgeText,
+            string titleText,
+            string spritePath,
+            Color cardFillColor,
+            Color badgeBgColor,
+            Color borderColor,
+            out GameObject lockOverlay,
+            out Button startButton,
+            out Text startBtnText)
         {
-            GameObject cardObj = CreateUIBox("StageCard_" + stageNum, container, new Color(themeColor.r * 0.4f, themeColor.g * 0.4f, themeColor.b * 0.4f, 0.95f));
-            RectTransform cardRT = cardObj.GetComponent<RectTransform>();
-            cardRT.sizeDelta = new Vector2(360, 440);
-            cardRT.anchoredPosition = new Vector2(posX, 20);
+            // Outer Border
+            GameObject borderObj = CreateUIBox($"LevelCard_{levelNum}", container, borderColor);
+            RectTransform bRT = borderObj.GetComponent<RectTransform>();
+            bRT.sizeDelta = new Vector2(350, 480);
+            bRT.anchoredPosition = new Vector2(posX, 0);
 
-            CreateUIText("Tag", cardObj.transform, tag, 26, new Color(0.95f, 0.85f, 0.3f), FontStyle.Bold, new Vector2(0, 170), new Vector2(330, 40));
-            CreateUIText("Title", cardObj.transform, title, 22, Color.white, FontStyle.Bold, new Vector2(0, 115), new Vector2(330, 55));
-            CreateUIText("Desc", cardObj.transform, desc, 18, new Color(0.85f, 0.9f, 0.85f), FontStyle.Normal, new Vector2(0, 15), new Vector2(320, 110));
+            // Inner Fill Box
+            GameObject fillObj = CreateUIBox("CardFill", borderObj.transform, cardFillColor);
+            RectTransform fRT = fillObj.GetComponent<RectTransform>();
+            fRT.anchorMin = Vector2.zero;
+            fRT.anchorMax = Vector2.one;
+            fRT.offsetMin = new Vector2(6, 6);
+            fRT.offsetMax = new Vector2(-6, -6);
 
-            int sNum = stageNum;
-            CreateUIButton("BtnStartStage", cardObj.transform, "▶ MULAI TAHAP INI", new Vector2(0, -150), new Vector2(300, 60), themeColor, () =>
+            // Top Badge (Pill)
+            GameObject badgeObj = CreateUIBox("LevelBadge", fillObj.transform, badgeBgColor);
+            RectTransform badgeRT = badgeObj.GetComponent<RectTransform>();
+            badgeRT.anchorMin = new Vector2(0.5f, 1f);
+            badgeRT.anchorMax = new Vector2(0.5f, 1f);
+            badgeRT.pivot = new Vector2(0.5f, 1f);
+            badgeRT.anchoredPosition = new Vector2(0, -18);
+            badgeRT.sizeDelta = new Vector2(160, 38);
+
+            Text bTxt = CreateUIText("BadgeLabel", badgeObj.transform, badgeText, 18, Color.white, FontStyle.Bold, Vector2.zero, new Vector2(160, 38));
+            bTxt.alignment = TextAnchor.MiddleCenter;
+
+            // Title Label ("Selamatkan Orangutan!", etc.)
+            Text tTxt = CreateUIText("TitleLabel", fillObj.transform, titleText, 22, Color.white, FontStyle.Bold, new Vector2(0, 150), new Vector2(310, 55));
+            tTxt.alignment = TextAnchor.MiddleCenter;
+            Shadow tShadow = tTxt.gameObject.AddComponent<Shadow>();
+            tShadow.effectColor = new Color(0f, 0f, 0f, 0.6f);
+            tShadow.effectDistance = new Vector2(1f, -2f);
+
+            // Character / Animal Artwork
+            GameObject artObj = new GameObject("Artwork", typeof(RectTransform));
+            artObj.transform.SetParent(fillObj.transform, false);
+            RectTransform artRT = artObj.AddComponent<RectTransform>();
+            artRT.anchorMin = new Vector2(0.5f, 0.5f);
+            artRT.anchorMax = new Vector2(0.5f, 0.5f);
+            artRT.pivot = new Vector2(0.5f, 0.5f);
+            artRT.anchoredPosition = new Vector2(0, 20);
+            artRT.sizeDelta = new Vector2(240, 210);
+
+            Image artImg = artObj.AddComponent<Image>();
+            artImg.sprite = Resources.Load<Sprite>(spritePath);
+            artImg.preserveAspect = true;
+            artImg.raycastTarget = false;
+
+            // Action Button at Bottom
+            int lvl = levelNum;
+            string animalKey = levelNum == 1 ? "orangutan" : (levelNum == 2 ? "gajah_asia" : "harimau");
+            string btnLabel = levelNum == 3 ? "▶ HADAPI BOSS" : "▶ MULAI";
+            Color btnColor = levelNum == 3 ? new Color(0.65f, 0.12f, 0.12f) : new Color(0.18f, 0.70f, 0.28f);
+
+            startButton = CreateUIButton("BtnStart", fillObj.transform, btnLabel, new Vector2(0, -170), new Vector2(280, 56), btnColor, () =>
             {
-                if (GameFlowManager.Instance != null) GameFlowManager.Instance.StartStage(sNum);
+                OnLevelCardClicked(lvl, animalKey);
             });
+            startBtnText = startButton.GetComponentInChildren<Text>();
+
+            // Lock Overlay (for Level 2 and 3)
+            lockOverlay = CreateUIBox("LockOverlay", fillObj.transform, new Color(0f, 0f, 0f, 0.72f));
+            RectTransform lockRT = lockOverlay.GetComponent<RectTransform>();
+            lockRT.anchorMin = Vector2.zero;
+            lockRT.anchorMax = Vector2.one;
+            lockRT.offsetMin = Vector2.zero;
+            lockRT.offsetMax = Vector2.zero;
+
+            Text lockTxt = CreateUIText("LockLabel", lockOverlay.transform, "🔒 TERKUNCI\n<size=16>Selesaikan level sebelumnya</size>", 22, new Color(1f, 0.85f, 0.85f), FontStyle.Bold, Vector2.zero, new Vector2(300, 100));
+            lockTxt.alignment = TextAnchor.MiddleCenter;
+            lockOverlay.SetActive(false);
+
+            // Card Click Trigger
+            Button cardClickBtn = fillObj.AddComponent<Button>();
+            cardClickBtn.targetGraphic = fillObj.GetComponent<Image>();
+            cardClickBtn.onClick.AddListener(() =>
+            {
+                OnLevelCardClicked(lvl, animalKey);
+            });
+
+            return borderObj;
         }
+
+        private void OnLevelCardClicked(int levelNum, string animalKey)
+        {
+            bool isUnlocked = true;
+            if (levelNum == 2)
+            {
+                isUnlocked = CareSaveManager.Instance != null &&
+                    (CareSaveManager.Instance.CurrentStage >= 2 || CareSaveManager.Instance.Data.unlockedAnimals.Contains("orangutan"));
+            }
+            else if (levelNum == 3)
+            {
+                isUnlocked = CareSaveManager.Instance != null &&
+                    (CareSaveManager.Instance.CurrentStage >= 3 || CareSaveManager.Instance.Data.unlockedAnimals.Contains("gajah_asia"));
+            }
+
+            if (!isUnlocked)
+            {
+                if (CareAudioManager.Instance != null) CareAudioManager.Instance.PlayWrongClickSFX();
+                Debug.Log($"[C.A.R.E.] Level {levelNum} masih terkunci! Selesaikan level sebelumnya.");
+                return;
+            }
+
+            if (CareAudioManager.Instance != null) CareAudioManager.Instance.PlayTransitionSFX();
+            OpenDossierModal(levelNum, animalKey);
+        }
+
+        public void UpdateStageMapUI()
+        {
+            bool l2Unlocked = CareSaveManager.Instance != null &&
+                (CareSaveManager.Instance.CurrentStage >= 2 || CareSaveManager.Instance.Data.unlockedAnimals.Contains("orangutan"));
+            bool l3Unlocked = CareSaveManager.Instance != null &&
+                (CareSaveManager.Instance.CurrentStage >= 3 || CareSaveManager.Instance.Data.unlockedAnimals.Contains("gajah_asia"));
+
+            if (level2LockOverlay != null) level2LockOverlay.SetActive(!l2Unlocked);
+            if (level2StartBtn != null)
+            {
+                level2StartBtn.interactable = l2Unlocked;
+                if (level2BtnText != null) level2BtnText.text = l2Unlocked ? "▶ MULAI" : "🔒 TERKUNCI";
+            }
+
+            if (level3LockOverlay != null) level3LockOverlay.SetActive(!l3Unlocked);
+            if (level3StartBtn != null)
+            {
+                level3StartBtn.interactable = l3Unlocked;
+                if (level3BtnText != null) level3BtnText.text = l3Unlocked ? "▶ HADAPI BOSS" : "🔒 TERKUNCI";
+            }
+        }
+
+        #region Animal Dossier Modal (Figma Frame 143:2010 & 143:2768)
+
+        private GameObject BuildDossierModal(Transform parent)
+        {
+            // Fullscreen Dark Backdrop
+            GameObject modal = CreateFullScreenPanel("DossierModal", parent, new Color(0f, 0f, 0f, 0.82f));
+
+            // Main Card Window
+            GameObject cardObj = CreateUIBox("ModalCard", modal.transform, new Color(0.06f, 0.14f, 0.09f, 0.98f));
+            RectTransform cardRT = cardObj.GetComponent<RectTransform>();
+            cardRT.sizeDelta = new Vector2(980, 620);
+            cardRT.anchoredPosition = Vector2.zero;
+
+            // Border Outline
+            Outline cardOutline = cardObj.AddComponent<Outline>();
+            cardOutline.effectColor = new Color(0.18f, 0.65f, 0.32f, 1f);
+            cardOutline.effectDistance = new Vector2(4f, -4f);
+
+            // Close button (X) top-right
+            CreateUIButton("BtnCloseDossier", cardObj.transform, "✕ TUTUP", new Vector2(410, 260), new Vector2(130, 44), new Color(0.6f, 0.2f, 0.2f), () =>
+            {
+                CloseDossierModal();
+            });
+
+            // Header: Common Name & Scientific Name
+            dossierCommonNameText = CreateUIText("CommonName", cardObj.transform, "ORANGUTAN", 34, Color.white, FontStyle.Bold, new Vector2(-120, 265), new Vector2(650, 46));
+            dossierScientificNameText = CreateUIText("ScientificName", cardObj.transform, "Pongo pygmaeus", 20, new Color(1f, 0.85f, 0.35f), FontStyle.Italic, new Vector2(-120, 225), new Vector2(650, 32));
+
+            // Left Side: Artwork Container
+            GameObject previewBox = CreateUIBox("ArtworkFrame", cardObj.transform, new Color(0.04f, 0.09f, 0.06f, 1f));
+            RectTransform pbRT = previewBox.GetComponent<RectTransform>();
+            pbRT.sizeDelta = new Vector2(300, 300);
+            pbRT.anchoredPosition = new Vector2(-300, 30);
+
+            GameObject previewObj = new GameObject("AnimalPreviewImage", typeof(RectTransform));
+            previewObj.transform.SetParent(previewBox.transform, false);
+            RectTransform prRT = previewObj.GetComponent<RectTransform>();
+            prRT.sizeDelta = new Vector2(270, 270);
+            prRT.anchoredPosition = Vector2.zero;
+            dossierPreviewImage = previewObj.AddComponent<Image>();
+            dossierPreviewImage.preserveAspect = true;
+
+            // Conservation Status Tag
+            GameObject statusBadge = CreateUIBox("StatusBadge", cardObj.transform, new Color(0.82f, 0.33f, 0f, 1f));
+            RectTransform sbRT = statusBadge.GetComponent<RectTransform>();
+            sbRT.sizeDelta = new Vector2(300, 38);
+            sbRT.anchoredPosition = new Vector2(-300, -150);
+
+            dossierStatusText = CreateUIText("StatusText", statusBadge.transform, "Status: Kritis / Sangat Terancam Punah (CR)", 15, Color.white, FontStyle.Bold, Vector2.zero, new Vector2(290, 38));
+            dossierStatusText.alignment = TextAnchor.MiddleCenter;
+
+            // Right Side: Tabs Container
+            GameObject tabDampakObj = CreateUIBox("TabDampak", cardObj.transform, new Color(0.18f, 0.65f, 0.32f, 1f));
+            RectTransform tdRT = tabDampakObj.GetComponent<RectTransform>();
+            tdRT.sizeDelta = new Vector2(270, 44);
+            tdRT.anchoredPosition = new Vector2(35, 175);
+            dossierTabDampakBg = tabDampakObj.GetComponent<Image>();
+            dossierTabDampakText = CreateUIText("Label", tabDampakObj.transform, "Dampak Karhutla", 18, Color.white, FontStyle.Bold, Vector2.zero, new Vector2(270, 44));
+            dossierTabDampakText.alignment = TextAnchor.MiddleCenter;
+            Button tdBt = tabDampakObj.AddComponent<Button>();
+            tdBt.onClick.AddListener(() => SetDossierTab(0));
+
+            GameObject tabTaksonomiObj = CreateUIBox("TabTaksonomi", cardObj.transform, new Color(0.12f, 0.25f, 0.18f, 1f));
+            RectTransform ttRT = tabTaksonomiObj.GetComponent<RectTransform>();
+            ttRT.sizeDelta = new Vector2(270, 44);
+            ttRT.anchoredPosition = new Vector2(315, 175);
+            dossierTabTaksonomiBg = tabTaksonomiObj.GetComponent<Image>();
+            dossierTabTaksonomiText = CreateUIText("Label", tabTaksonomiObj.transform, "Taksonomi & Habitat", 18, new Color(0.75f, 0.85f, 0.75f), FontStyle.Bold, Vector2.zero, new Vector2(270, 44));
+            dossierTabTaksonomiText.alignment = TextAnchor.MiddleCenter;
+            Button ttBt = tabTaksonomiObj.AddComponent<Button>();
+            ttBt.onClick.AddListener(() => SetDossierTab(1));
+
+            // Right Side: Content Description Box
+            GameObject descBox = CreateUIBox("DescBox", cardObj.transform, new Color(0.04f, 0.09f, 0.06f, 0.95f));
+            RectTransform descBoxRT = descBox.GetComponent<RectTransform>();
+            descBoxRT.sizeDelta = new Vector2(550, 240);
+            descBoxRT.anchoredPosition = new Vector2(175, 15);
+
+            dossierDescText = CreateUIText("DescBody", descBox.transform, "", 17, new Color(0.92f, 0.96f, 0.92f), FontStyle.Normal, Vector2.zero, new Vector2(510, 210));
+            dossierDescText.alignment = TextAnchor.UpperLeft;
+            dossierDescText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            dossierDescText.verticalOverflow = VerticalWrapMode.Truncate;
+
+            // Bottom Right: Big Green Start Mission Button ("MULAI")
+            dossierStartBtn = CreateUIButton("BtnStartMission", cardObj.transform, "▶ MULAI MISI", new Vector2(175, -150), new Vector2(300, 60), new Color(0.18f, 0.75f, 0.28f), () =>
+            {
+                OnDossierStartClicked();
+            });
+
+            modal.SetActive(false);
+            return modal;
+        }
+
+        public void OpenDossierModal(int stageNum, string animalKey)
+        {
+            dossierSelectedLevel = stageNum;
+            dossierSelectedAnimal = animalKey;
+            dossierSelectedTab = 0;
+
+            if (stageNum == 1)
+            {
+                if (dossierCommonNameText != null) dossierCommonNameText.text = "ORANGUTAN";
+                if (dossierScientificNameText != null) dossierScientificNameText.text = "Pongo pygmaeus";
+                if (dossierStatusText != null) dossierStatusText.text = "Status: Sangat Terancam Punah (CR)";
+                if (dossierPreviewImage != null)
+                {
+                    dossierPreviewImage.sprite = Resources.Load<Sprite>("TemporaryAssets/Animals/orangutan");
+                    dossierPreviewImage.color = Color.white;
+                }
+            }
+            else if (stageNum == 2)
+            {
+                if (dossierCommonNameText != null) dossierCommonNameText.text = "GAJAH ASIA";
+                if (dossierScientificNameText != null) dossierScientificNameText.text = "Elephas maximus sumatranus";
+                if (dossierStatusText != null) dossierStatusText.text = "Status: Terancam Punah (EN)";
+                if (dossierPreviewImage != null)
+                {
+                    dossierPreviewImage.sprite = Resources.Load<Sprite>("TemporaryAssets/Animals/gajah_asia");
+                    dossierPreviewImage.color = Color.white;
+                }
+            }
+            else if (stageNum == 3)
+            {
+                if (dossierCommonNameText != null) dossierCommonNameText.text = "DOCTOR SAWIT MAN & HARIMAU";
+                if (dossierScientificNameText != null) dossierScientificNameText.text = "Konfrontasi Pembalakan & Karhutla Ilegal";
+                if (dossierStatusText != null) dossierStatusText.text = "Misi: Konfrontasi Terakhir / Bos Final";
+                if (dossierPreviewImage != null)
+                {
+                    dossierPreviewImage.sprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man");
+                    dossierPreviewImage.color = Color.white;
+                }
+            }
+
+            SetDossierTab(0);
+
+            if (dossierModal != null)
+            {
+                dossierModal.SetActive(true);
+                dossierModal.transform.SetAsLastSibling();
+            }
+        }
+
+        public void CloseDossierModal()
+        {
+            if (dossierModal != null) dossierModal.SetActive(false);
+        }
+
+        private void SetDossierTab(int tabIndex)
+        {
+            dossierSelectedTab = tabIndex;
+
+            if (dossierTabDampakBg != null)
+                dossierTabDampakBg.color = tabIndex == 0 ? new Color(0.18f, 0.65f, 0.32f, 1f) : new Color(0.12f, 0.25f, 0.18f, 1f);
+            if (dossierTabDampakText != null)
+                dossierTabDampakText.color = tabIndex == 0 ? Color.white : new Color(0.75f, 0.85f, 0.75f);
+
+            if (dossierTabTaksonomiBg != null)
+                dossierTabTaksonomiBg.color = tabIndex == 1 ? new Color(0.18f, 0.65f, 0.32f, 1f) : new Color(0.12f, 0.25f, 0.18f, 1f);
+            if (dossierTabTaksonomiText != null)
+                dossierTabTaksonomiText.color = tabIndex == 1 ? Color.white : new Color(0.75f, 0.85f, 0.75f);
+
+            RefreshDossierTabContent();
+        }
+
+        private void RefreshDossierTabContent()
+        {
+            if (dossierDescText == null) return;
+
+            if (dossierSelectedLevel == 1)
+            {
+                if (dossierSelectedTab == 0)
+                {
+                    dossierDescText.text =
+                        "Orangutan (Pongo sp.) adalah kera besar endemik Indonesia yang hidup arboreal di atas pepohonan hutan hujan tropis Kalimantan dan Sumatera.\n\n" +
+                        "Kebakaran hutan dan lahan (karhutla) secara masif menghancurkan pohon pakan dan tempat bersarang mereka. Kabut asap pekat menyebabkan infeksi pernapasan akut serta memutus koridor gerak alami, memaksa mereka turun ke perkebunan warga yang berujung pada perburuan.\n\n" +
+                        "Padukan elemen air dan roket forensik untuk memadamkan api dan menyelamatkan Orangutan!";
+                }
+                else
+                {
+                    dossierDescText.text =
+                        "• Famili: Hominidae\n" +
+                        "• Genus: Pongo\n" +
+                        "• Spesies: Pongo pygmaeus\n" +
+                        "• Habitat: Kanopi hutan hujan tropis dataran rendah dan rawa gambut\n" +
+                        "• Pakan: Buah hutan (ara, durian hutan), daun muda, kulit kayu, madu, dan serangga.";
+                }
+            }
+            else if (dossierSelectedLevel == 2)
+            {
+                if (dossierSelectedTab == 0)
+                {
+                    dossierDescText.text =
+                        "Gajah asia adalah mamalia darat terbesar di Asia yang membutuhkan daya jelajah luas dan koridor hutan utuh untuk mencari makan dan minum.\n\n" +
+                        "Karhutla menghancurkan vegetasi pakan melimpah serta mencemari kubangan air bersih. Rusaknya jalur lintasan alami memaksa kawanan gajah memasuki pemukiman dan lahan pertanian warga, menimbulkan gesekan konflik yang mengancam kepunahan spesies ini.\n\n" +
+                        "Buka koridor aman dan selamatkan Gajah Asia!";
+                }
+                else
+                {
+                    dossierDescText.text =
+                        "• Famili: Elephantidae\n" +
+                        "• Genus: Elephas\n" +
+                        "• Spesies: Elephas maximus\n" +
+                        "• Habitat: Hutan tropis dataran rendah, padang rumput savana, dan lembah berair\n" +
+                        "• Pakan: Rerumputan, batang bambu muda, dedaunan, kulit pohon, dan akar.";
+                }
+            }
+            else if (dossierSelectedLevel == 3)
+            {
+                if (dossierSelectedTab == 0)
+                {
+                    dossierDescText.text =
+                        "Doctor Sawit Man melakukan pembukaan lahan secara agresif melalui pembakaran massal demi memperluas area perkebunan monokultur.\n\n" +
+                        "Kobaran api raksasa mengepung suaka terakhir bagi Harimau Sumatera yang kini terjebak dan terluka. Penjelajah C.A.R.E harus berhadapan langsung dengan Doctor Sawit Man, memadamkan api menggunakan kombo forensik, dan memulihkan kembali ekosistem rimba!\n\n" +
+                        "Hadapi Doctor Sawit Man dan lindungi seluruh satwa rimba!";
+                }
+                else
+                {
+                    dossierDescText.text =
+                        "• Target Musuh: Doctor Sawit Man (Peralatan Meriam Sawit & Reagen Pembakar)\n" +
+                        "• Satwa Dilindungi: Harimau Sumatera (Panthera tigris sumatrae)\n" +
+                        "• Lokasi Misi: Koridor Utama Perkebunan & Perbatasan Rimba Terbakar\n" +
+                        "• Mekanik Pertarungan: Geser dan padukan balok forensik untuk menembakkan roket pemadam dan menumbangkan HP Doctor Sawit Man!";
+                }
+            }
+        }
+
+        private void OnDossierStartClicked()
+        {
+            if (CareAudioManager.Instance != null) CareAudioManager.Instance.PlayTransitionSFX();
+            CloseDossierModal();
+            if (GameFlowManager.Instance != null)
+            {
+                GameFlowManager.Instance.StartStage(dossierSelectedLevel);
+            }
+        }
+
+        #endregion
 
         private GameObject BuildHiddenObjectPanel(Transform parent)
         {
