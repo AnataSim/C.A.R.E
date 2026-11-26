@@ -996,7 +996,7 @@ namespace CARE.Core
             // Back button on top-left returning to Title Screen
             GameObject backObj = new GameObject("BtnBackTitle", typeof(RectTransform));
             backObj.transform.SetParent(panel.transform, false);
-            RectTransform backRT = backObj.AddComponent<RectTransform>();
+            RectTransform backRT = backObj.GetComponent<RectTransform>();
             backRT.anchorMin = new Vector2(0f, 1f);
             backRT.anchorMax = new Vector2(0f, 1f);
             backRT.pivot = new Vector2(0f, 1f);
@@ -1106,7 +1106,7 @@ namespace CARE.Core
             // Character / Animal Artwork
             GameObject artObj = new GameObject("Artwork", typeof(RectTransform));
             artObj.transform.SetParent(fillObj.transform, false);
-            RectTransform artRT = artObj.AddComponent<RectTransform>();
+            RectTransform artRT = artObj.GetComponent<RectTransform>();
             artRT.anchorMin = new Vector2(0.5f, 0.5f);
             artRT.anchorMax = new Vector2(0.5f, 0.5f);
             artRT.pivot = new Vector2(0.5f, 0.5f);
