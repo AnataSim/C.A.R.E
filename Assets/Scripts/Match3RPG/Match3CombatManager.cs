@@ -251,63 +251,7 @@ namespace CARE.Gameplay
             Transform existing = enemyRect.transform.Find("HitboxTargetFrame");
             if (existing != null) Destroy(existing.gameObject);
 
-            hitboxIndicatorObj = new GameObject("HitboxTargetFrame", typeof(RectTransform));
-            hitboxIndicatorObj.transform.SetParent(enemyRect.transform, false);
-            RectTransform frt = hitboxIndicatorObj.GetComponent<RectTransform>();
-            frt.sizeDelta = new Vector2(BossHitboxWidth, BossHitboxHeight);
-            frt.anchoredPosition = Vector2.zero;
-            frt.localEulerAngles = Vector3.zero;
-            frt.localScale = Vector3.one;
-
-            Sprite white = GetWhiteSprite();
-
-            // Left Target Bracket [
-            GameObject leftBracket = new GameObject("LeftBracket", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            leftBracket.transform.SetParent(hitboxIndicatorObj.transform, false);
-            RectTransform lrt = leftBracket.GetComponent<RectTransform>();
-            lrt.sizeDelta = new Vector2(6f, BossHitboxHeight * 0.7f);
-            lrt.anchoredPosition = new Vector2(-BossHitboxWidth * 0.5f, 0);
-            Image lImg = leftBracket.GetComponent<Image>();
-            lImg.sprite = white;
-            lImg.color = new Color(1f, 0.3f, 0.3f, 0.7f);
-            lImg.raycastTarget = false;
-
-            // Right Target Bracket ]
-            GameObject rightBracket = new GameObject("RightBracket", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            rightBracket.transform.SetParent(hitboxIndicatorObj.transform, false);
-            RectTransform rrt = rightBracket.GetComponent<RectTransform>();
-            rrt.sizeDelta = new Vector2(6f, BossHitboxHeight * 0.7f);
-            rrt.anchoredPosition = new Vector2(BossHitboxWidth * 0.5f, 0);
-            Image rImg = rightBracket.GetComponent<Image>();
-            rImg.sprite = white;
-            rImg.color = new Color(1f, 0.3f, 0.3f, 0.7f);
-            rImg.raycastTarget = false;
-
-            // Ground Target Zone Ring at feet
-            GameObject ringObj = new GameObject("FootTargetZone", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            ringObj.transform.SetParent(hitboxIndicatorObj.transform, false);
-            RectTransform ringRT = ringObj.GetComponent<RectTransform>();
-            ringRT.sizeDelta = new Vector2(BossHitboxWidth, 34f);
-            ringRT.anchoredPosition = new Vector2(0, -BossHitboxHeight * 0.5f + 16f);
-            Image ringImg = ringObj.GetComponent<Image>();
-            ringImg.sprite = white;
-            ringImg.color = new Color(1f, 0.22f, 0.22f, 0.42f);
-            ringImg.raycastTarget = false;
-
-            // Target Label
-            GameObject txtObj = new GameObject("TargetLabel", typeof(RectTransform));
-            txtObj.transform.SetParent(hitboxIndicatorObj.transform, false);
-            RectTransform trt = txtObj.GetComponent<RectTransform>();
-            trt.sizeDelta = new Vector2(BossHitboxWidth, 24f);
-            trt.anchoredPosition = new Vector2(0, -BossHitboxHeight * 0.5f + 16f);
-            Text lbl = txtObj.AddComponent<Text>();
-            lbl.font = GetGameFont();
-            lbl.text = "🎯 TARGET";
-            lbl.fontSize = 14;
-            lbl.fontStyle = FontStyle.Bold;
-            lbl.alignment = TextAnchor.MiddleCenter;
-            lbl.color = new Color(1f, 0.95f, 0.5f, 0.85f);
-            lbl.raycastTarget = false;
+            // Garis merah target hitbox dihilangkan sesuai permintaan agar tampilan karakter bersih saat patroli
         }
 
         #endregion
@@ -460,7 +404,39 @@ namespace CARE.Gameplay
             bossCurrentX = bossMaxX; // Starts on the right side
             bossMoveDirection = -1;  // Moves right-to-left first
 
-            // Create target indicator
+            // Konfigurasi pose sprite Dr. Sawit Man per stage gameplay:
+            // Gameplay 1 -> doctor_sawit_man_throw
+            // Gameplay 2 -> doctor_sawit_man_flask_up
+            // Gameplay 3 -> doctor_sawit_man_cannon
+            if (stage == 1)
+            {
+                enemyIdleSprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_throw");
+            }
+            else if (stage == 2)
+            {
+                enemyIdleSprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_flask_up");
+            }
+            else // Stage 3
+            {
+                enemyIdleSprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_cannon");
+            }
+
+            if (enemyIdleSprite == null)
+            {
+                enemyIdleSprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_idle")
+                               ?? Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man");
+            }
+
+            enemyEnragedSprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_enraged");
+            if (enemyEnragedSprite == null) enemyEnragedSprite = enemyIdleSprite;
+
+            if (enemyImage != null && enemyIdleSprite != null)
+            {
+                enemyImage.sprite = enemyIdleSprite;
+                enemyImage.preserveAspect = true;
+            }
+
+            // Create target indicator (garis merah dinonaktifkan)
             CreateHitboxIndicator();
 
             // Configure Target HP, Turns, Timer, Boss Speed, and Rigging

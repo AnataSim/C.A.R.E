@@ -48,6 +48,14 @@ namespace CARE.UI
         [SerializeField] private Sprite monyetHead;
         [SerializeField] private Sprite harimauHead;
 
+        [Header("Dr. Sawit Man Stage Story Sprites")]
+        [SerializeField] private Sprite sawitManThrowSprite;   // doctor_sawit_man_throw (Stage 1 Intro)
+        [SerializeField] private Sprite sawitManSpellSprite;   // doctor_sawit_man_spell (Stage 1 Defeat)
+        [SerializeField] private Sprite sawitManFlaskUpSprite; // doctor_sawit_man_flask_up (Stage 2 Intro)
+        [SerializeField] private Sprite sawitManDefaultSprite; // doctor_sawit_man (Stage 2 Defeat)
+        [SerializeField] private Sprite sawitManCannonSprite;  // doctor_sawit_man_cannon (Stage 3 Intro)
+        [SerializeField] private Sprite sawitManCrossedSprite; // doctor_sawit_man_crossed (Stage 3 Defeat)
+
         [Header("Settings")]
         [SerializeField] private float typingSpeed = 0.020f; // Dipercepat agar dialog lebih responsif & dinamis
         [SerializeField] private float agotiVoicePitch = 1.35f; // Kecepatan pitch Agoti dipercepat (dicepetin)
@@ -131,6 +139,14 @@ namespace CARE.UI
             if (monyetHead == null) monyetHead = Resources.Load<Sprite>("Animalia/monyet_head");
             if (harimauHead == null) harimauHead = Resources.Load<Sprite>("Animalia/harimau_head");
             if (typewriterSFX == null) typewriterSFX = Resources.Load<AudioClip>("Audio/sfx_click");
+
+            // Auto-load Dr. Sawit Man dynamic stage story poses
+            if (sawitManThrowSprite == null) sawitManThrowSprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_throw");
+            if (sawitManSpellSprite == null) sawitManSpellSprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_spell");
+            if (sawitManFlaskUpSprite == null) sawitManFlaskUpSprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_flask_up");
+            if (sawitManDefaultSprite == null) sawitManDefaultSprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man");
+            if (sawitManCannonSprite == null) sawitManCannonSprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_cannon");
+            if (sawitManCrossedSprite == null) sawitManCrossedSprite = Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_crossed");
 
             // Auto-load Agoti Boss speech tone clips for each stage
             if (agotiStage1Tone == null)
@@ -321,15 +337,16 @@ namespace CARE.UI
                 }
             }
 
-            // Head Avatar handling ("ada kepala gitu")
+            // Head Avatar handling ("ada kepala gitu", khusus Dr. Sawit Man gunakan pose penuh dinamis)
             bool hasHead = !isMaroon && !string.IsNullOrEmpty(line.portraitKey) && line.portraitKey != "none" && line.speaker != "NARATOR";
             if (headAvatarImage != null)
             {
                 if (hasHead)
                 {
                     headAvatarImage.gameObject.SetActive(true);
+                    headAvatarImage.preserveAspect = true;
                     if (line.portraitKey == "penjelajah") headAvatarImage.sprite = penjelajahHead != null ? penjelajahHead : penjelajahPortrait;
-                    else if (line.portraitKey == "sawit_man") headAvatarImage.sprite = sawitManHead != null ? sawitManHead : sawitManPortrait;
+                    else if (line.portraitKey == "sawit_man") headAvatarImage.sprite = GetSawitManStorySprite(line);
                     else if (line.portraitKey == "monyet") headAvatarImage.sprite = monyetHead != null ? monyetHead : monyetPortrait;
                     else if (line.portraitKey == "harimau") headAvatarImage.sprite = harimauHead != null ? harimauHead : harimauPortrait;
                 }
@@ -388,9 +405,18 @@ namespace CARE.UI
 
                         if (headAvatarImage != null)
                         {
+                            headAvatarImage.preserveAspect = true;
                             RectTransform hRT = headAvatarImage.rectTransform;
-                            hRT.anchorMin = new Vector2(0.04f, 0.63f);
-                            hRT.anchorMax = new Vector2(0.20f, 0.94f);
+                            if (line.portraitKey == "sawit_man")
+                            {
+                                hRT.anchorMin = new Vector2(0.02f, 0.60f);
+                                hRT.anchorMax = new Vector2(0.21f, 0.96f);
+                            }
+                            else
+                            {
+                                hRT.anchorMin = new Vector2(0.04f, 0.63f);
+                                hRT.anchorMax = new Vector2(0.20f, 0.94f);
+                            }
                             hRT.offsetMin = Vector2.zero;
                             hRT.offsetMax = Vector2.zero;
                         }
@@ -405,9 +431,18 @@ namespace CARE.UI
 
                         if (headAvatarImage != null)
                         {
+                            headAvatarImage.preserveAspect = true;
                             RectTransform hRT = headAvatarImage.rectTransform;
-                            hRT.anchorMin = new Vector2(0.04f, 0.06f);
-                            hRT.anchorMax = new Vector2(0.20f, 0.37f);
+                            if (line.portraitKey == "sawit_man")
+                            {
+                                hRT.anchorMin = new Vector2(0.02f, 0.05f);
+                                hRT.anchorMax = new Vector2(0.21f, 0.42f);
+                            }
+                            else
+                            {
+                                hRT.anchorMin = new Vector2(0.04f, 0.06f);
+                                hRT.anchorMax = new Vector2(0.20f, 0.37f);
+                            }
                             hRT.offsetMin = Vector2.zero;
                             hRT.offsetMax = Vector2.zero;
                         }
@@ -428,10 +463,10 @@ namespace CARE.UI
                     portraitImage.gameObject.SetActive(true);
                     portraitImage.sprite = penjelajahPortrait;
                 }
-                else if (line.portraitKey == "sawit_man" && sawitManPortrait != null)
+                else if (line.portraitKey == "sawit_man")
                 {
                     portraitImage.gameObject.SetActive(true);
-                    portraitImage.sprite = sawitManPortrait;
+                    portraitImage.sprite = GetSawitManStorySprite(line);
                 }
                 else if (line.portraitKey == "monyet" && monyetPortrait != null)
                 {
@@ -461,6 +496,64 @@ namespace CARE.UI
 
             if (typingCoroutine != null) StopCoroutine(typingCoroutine);
             typingCoroutine = StartCoroutine(TypeText(line));
+        }
+
+        /// <summary>
+        /// Mendapatkan Sprite Dr. Sawit Man sesuai alur cerita (tanpa avatar kepala terpotong):
+        /// - Masuk story gameplay 1: doctor_sawit_man_throw
+        /// - Selesai gameplay 1: doctor_sawit_man_spell
+        /// - Sebelum gameplay 2: doctor_sawit_man_flask_up
+        /// - Selesai gameplay 2: doctor_sawit_man
+        /// - Sebelum gameplay 3: doctor_sawit_man_cannon
+        /// - Selesai gameplay 3: doctor_sawit_man_crossed
+        /// </summary>
+        public Sprite GetSawitManStorySprite(DialogueLine line = null)
+        {
+            // 1. Cek dari daftar baris dialog aktif
+            if (currentDialogueLines != null && currentDialogueLines.Count > 0)
+            {
+                var first = currentDialogueLines[0];
+                if (CareStoryDatabase.BossStage1_Intro != null && CareStoryDatabase.BossStage1_Intro.Count > 0 && first == CareStoryDatabase.BossStage1_Intro[0])
+                    return sawitManThrowSprite ?? Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_throw");
+                if (CareStoryDatabase.BossStage1_Defeat != null && CareStoryDatabase.BossStage1_Defeat.Count > 0 && first == CareStoryDatabase.BossStage1_Defeat[0])
+                    return sawitManSpellSprite ?? Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_spell");
+
+                if (CareStoryDatabase.BossStage2_Intro != null && CareStoryDatabase.BossStage2_Intro.Count > 0 && first == CareStoryDatabase.BossStage2_Intro[0])
+                    return sawitManFlaskUpSprite ?? Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_flask_up");
+                if (CareStoryDatabase.BossStage2_Defeat != null && CareStoryDatabase.BossStage2_Defeat.Count > 0 && first == CareStoryDatabase.BossStage2_Defeat[0])
+                    return sawitManDefaultSprite ?? Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man");
+
+                if (CareStoryDatabase.BossStage3_Intro != null && CareStoryDatabase.BossStage3_Intro.Count > 0 && first == CareStoryDatabase.BossStage3_Intro[0])
+                    return sawitManCannonSprite ?? Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_cannon");
+                if (CareStoryDatabase.BossStage3_Defeat != null && CareStoryDatabase.BossStage3_Defeat.Count > 0 && first == CareStoryDatabase.BossStage3_Defeat[0])
+                    return sawitManCrossedSprite ?? Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_crossed");
+            }
+
+            // 2. Fallback cek dari teks kalimat dialog spesifik
+            if (line != null && !string.IsNullOrEmpty(line.text))
+            {
+                string t = line.text;
+                if (t.Contains("mengumpulkan cukup banyak catatan") || t.Contains("sebagian kecil dari persoalan"))
+                    return sawitManThrowSprite ?? Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_throw");
+                if (t.Contains("belum memahami seluruh ceritanya"))
+                    return sawitManSpellSprite ?? Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_spell");
+
+                if (t.Contains("masih mengikuti jejak itu") || t.Contains("Satu kawasan yang rusak"))
+                    return sawitManFlaskUpSprite ?? Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_flask_up");
+                if (t.Contains("semakin dekat, tetapi masih ada satu bagian"))
+                    return sawitManDefaultSprite ?? Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man");
+
+                if (t.Contains("sampai sejauh ini") || t.Contains("pembukaan lahan akan memberi keuntungan") || t.Contains("tidak bisa menyangkal catatan"))
+                    return sawitManCannonSprite ?? Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_cannon");
+                if (t.Contains("mengakui bahwa tindakanku") || t.Contains("bersedia menyerahkan informasi"))
+                    return sawitManCrossedSprite ?? Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_crossed");
+            }
+
+            // 3. Fallback berdasarkan stage number
+            int stage = GetCurrentStageNumber(line);
+            if (stage == 1) return sawitManThrowSprite ?? Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_throw");
+            if (stage == 2) return sawitManFlaskUpSprite ?? Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_flask_up");
+            return sawitManCannonSprite ?? Resources.Load<Sprite>("TemporaryAssets/Characters/doctor_sawit_man_cannon");
         }
 
         /// <summary>
