@@ -193,6 +193,7 @@ namespace CARE.Core
 
             if (CareAudioManager.Instance != null)
             {
+                CareAudioManager.Instance.StopAmbience();
                 CareAudioManager.Instance.PlayBossBGM();
             }
 
@@ -236,6 +237,7 @@ namespace CARE.Core
 
             if (CareAudioManager.Instance != null)
             {
+                CareAudioManager.Instance.StopAmbience();
                 CareAudioManager.Instance.PlayBossBGM();
             }
 
@@ -266,6 +268,10 @@ namespace CARE.Core
         public void ShowStageDefeatDialogue(int stageNumber)
         {
             HideAllScreens();
+            if (CareAudioManager.Instance != null)
+            {
+                CareAudioManager.Instance.StopAmbience();
+            }
 
             List<DialogueLine> defeatDialogue = null;
             if (stageNumber == 1) defeatDialogue = CareStoryDatabase.BossStage1_Defeat;

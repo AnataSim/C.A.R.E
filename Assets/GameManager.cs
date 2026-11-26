@@ -47,6 +47,14 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        // Jika sistem alur cerita CARE sedang aktif, biarkan CareAudioManager yang mengelola musik (hindari BGM tabrakan)
+        if (CARE.Core.GameFlowManager.Instance != null || CARE.Audio.CareAudioManager.Instance != null)
+        {
+            StopBGM();
+            ShowPanel(0);
+            return;
+        }
+
         // Putar musik latar jika sudah ditentukan
         if (defaultBGM != null)
         {
@@ -59,9 +67,13 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        // Jika sistem alur cerita CARE sedang aktif, biarkan sistem game mengontrol layar
-        if (CARE.Core.GameFlowManager.Instance != null && CARE.Core.GameFlowManager.Instance.currentState != CARE.Core.GameState.TitleScreen)
+        // Jika sistem alur cerita CARE sedang aktif, biarkan sistem game mengontrol layar dan hentikan BGM GameManager
+        if (CARE.Core.GameFlowManager.Instance != null)
         {
+            if (bgmSource != null && bgmSource.isPlaying)
+            {
+                bgmSource.Stop();
+            }
             return;
         }
 

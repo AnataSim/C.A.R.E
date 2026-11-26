@@ -49,7 +49,9 @@ namespace CARE.UI
         [SerializeField] private Sprite harimauHead;
 
         [Header("Settings")]
-        [SerializeField] private float typingSpeed = 0.035f;
+        [SerializeField] private float typingSpeed = 0.020f; // Dipercepat agar dialog lebih responsif & dinamis
+        [SerializeField] private float agotiVoicePitch = 1.35f; // Kecepatan pitch Agoti dipercepat (dicepetin)
+        [SerializeField] private float agotiVoiceVolume = 0.95f; // Volume voice Agoti diperjelas (dibanyakin)
         [SerializeField] private AudioClip typewriterSFX;
         [SerializeField] private AudioSource audioSource;
 
@@ -57,6 +59,14 @@ namespace CARE.UI
         [SerializeField] private AudioClip narratorMcTone;
         [SerializeField] private AudioClip drSawitNormalTone;
         [SerializeField] private AudioClip drSawitAngryTone;
+
+        [Header("Agoti Boss Tones (Per Stage)")]
+        [SerializeField] private AudioClip agotiStage1Tone;       // agotiText.ogg (Stage 1)
+        [SerializeField] private AudioClip agotiStage2Tone;       // agotiScaredText.ogg (Stage 2)
+        [SerializeField] private AudioClip agotiStage3Tone;       // agotiAngryText.ogg (Stage 3)
+        [SerializeField] private AudioClip boyfriendTone;         // boyfriendText.ogg (Penjelajah / MC)
+        [SerializeField] private AudioClip skipDialogSFX;         // skipDialog.ogg
+
         [SerializeField] private AudioSource voiceAudioSource;
 
         private List<DialogueLine> currentDialogueLines = new List<DialogueLine>();
@@ -122,21 +132,31 @@ namespace CARE.UI
             if (harimauHead == null) harimauHead = Resources.Load<Sprite>("Animalia/harimau_head");
             if (typewriterSFX == null) typewriterSFX = Resources.Load<AudioClip>("Audio/sfx_click");
 
-            // Auto-load voice speech tone clips from Resources/Audio/tone/
-            if (narratorMcTone == null)
+            // Auto-load Agoti Boss speech tone clips for each stage
+            if (agotiStage1Tone == null)
             {
-                narratorMcTone = Resources.Load<AudioClip>("Audio/tone/narrator_mc_tone");
-                if (narratorMcTone == null) narratorMcTone = Resources.Load<AudioClip>("Audio/tone/Narrator + MC Tone");
+                agotiStage1Tone = Resources.Load<AudioClip>("Audio/tone/agotiText")
+                               ?? Resources.Load<AudioClip>("Audio/tone/agotitext");
             }
-            if (drSawitNormalTone == null)
+            if (agotiStage2Tone == null)
             {
-                drSawitNormalTone = Resources.Load<AudioClip>("Audio/tone/dr_sawit_normal_tone");
-                if (drSawitNormalTone == null) drSawitNormalTone = Resources.Load<AudioClip>("Audio/tone/Normal Tone - Dr Sawit man");
+                agotiStage2Tone = Resources.Load<AudioClip>("Audio/tone/agotiScaredText")
+                               ?? Resources.Load<AudioClip>("Audio/tone/agotiscaredtext");
             }
-            if (drSawitAngryTone == null)
+            if (agotiStage3Tone == null)
             {
-                drSawitAngryTone = Resources.Load<AudioClip>("Audio/tone/dr_sawit_angry_tone");
-                if (drSawitAngryTone == null) drSawitAngryTone = Resources.Load<AudioClip>("Audio/tone/Angry Tone - Dr Sawit Man");
+                agotiStage3Tone = Resources.Load<AudioClip>("Audio/tone/agotiAngryText")
+                               ?? Resources.Load<AudioClip>("Audio/tone/agotiangrytext");
+            }
+            if (boyfriendTone == null)
+            {
+                boyfriendTone = Resources.Load<AudioClip>("Audio/tone/boyfriendText")
+                             ?? Resources.Load<AudioClip>("Audio/tone/boyfriendtext");
+            }
+            if (skipDialogSFX == null)
+            {
+                skipDialogSFX = Resources.Load<AudioClip>("Audio/tone/skipDialog")
+                             ?? Resources.Load<AudioClip>("Audio/tone/skipdialog");
             }
 
             if (continueButton != null)
@@ -184,6 +204,11 @@ namespace CARE.UI
         public void SkipDialogue()
         {
             Debug.Log("[DialogueManager] SkipDialogue dipanggil oleh pemain. Mengakhiri seluruh narasi.");
+            StopVoiceTone(); // Hentikan tone suara saat ini seketika
+            if (skipDialogSFX != null && audioSource != null)
+            {
+                audioSource.PlayOneShot(skipDialogSFX, 0.75f);
+            }
             EndDialogue();
         }
 
@@ -223,6 +248,14 @@ namespace CARE.UI
         {
             if (lines == null || lines.Count == 0) return;
 
+            StopVoiceTone();
+            if (typingCoroutine != null)
+            {
+                StopCoroutine(typingCoroutine);
+                typingCoroutine = null;
+            }
+            isTyping = false;
+
             currentDialogueLines = new List<DialogueLine>(lines);
             currentLineIndex = 0;
             onCompleteCallback = onComplete;
@@ -233,6 +266,8 @@ namespace CARE.UI
 
         private void DisplayCurrentLine()
         {
+            StopVoiceTone(); // Hentikan sisa tone audio baris sebelumnya agar tidak tabrakan
+
             if (currentLineIndex >= currentDialogueLines.Count)
             {
                 EndDialogue();
@@ -430,12 +465,15 @@ namespace CARE.UI
 
         /// <summary>
         /// Menentukan AudioClip voice tone yang cocok untuk baris percakapan saat ini.
-        /// Dr. Sawit Man: menggunakan Normal Tone diawal, dan Angry Tone saat marah / konfrontasi.
-        /// Narrator & Penjelajah (MC): berbagi tone yang sama karena MC mengingat memori sebagai narator.
+        /// Khusus Boss (Dr. Sawit Man):
+        /// - Stage 1: agotiText (nada Agoti normal)
+        /// - Stage 2: agotiScaredText (nada Agoti cemas/terancam)
+        /// - Stage 3: agotiAngryText (nada Agoti marah/konfrontasi puncak)
+        /// Penjelajah (MC), Narator, dan UI Petunjuk: null (hanya typewriterSFX agar hening & tidak ada suara gumaman di background)
         /// </summary>
         private AudioClip GetToneForLine(DialogueLine line)
         {
-            if (line == null) return narratorMcTone;
+            if (line == null) return null;
 
             string speaker = (line.speaker ?? "").ToUpperInvariant();
             string portrait = (line.portraitKey ?? "").ToLowerInvariant();
@@ -444,93 +482,102 @@ namespace CARE.UI
 
             if (isSawitMan)
             {
-                if (IsAngryTone(line))
+                int stage = GetCurrentStageNumber(line);
+                if (stage == 1)
                 {
-                    return drSawitAngryTone != null ? drSawitAngryTone : drSawitNormalTone;
+                    return agotiStage1Tone;
                 }
-                return drSawitNormalTone != null ? drSawitNormalTone : narratorMcTone;
+                else if (stage == 2)
+                {
+                    return agotiStage2Tone;
+                }
+                else // Stage 3
+                {
+                    return agotiStage3Tone;
+                }
             }
 
-            // Narrator dan Penjelajah (MC) menggunakan Narrator + MC tone
-            return narratorMcTone;
+            // Karakter lain (Penjelajah / Narator / UI) tidak menggunakan tone suara looping (hanya ketikan halus agar hening dan jernih)
+            return null;
         }
 
         /// <summary>
-        /// Mendeteksi apakah baris percakapan Dr. Sawit Man bernada marah/emosi tinggi.
+        /// Mendapatkan nomor stage saat ini untuk penyesuaian suara tone Boss.
         /// </summary>
-        private bool IsAngryTone(DialogueLine line)
+        public int GetCurrentStageNumber(DialogueLine line = null)
         {
-            if (line == null) return false;
-
-            if (!string.IsNullOrEmpty(line.sfxCue) &&
-                (line.sfxCue.IndexOf("angry", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                 line.sfxCue.IndexOf("rage", StringComparison.OrdinalIgnoreCase) >= 0))
+            // 1. Cek isi teks dialog spesifik jika ada
+            if (line != null && !string.IsNullOrEmpty(line.text))
             {
-                return true;
+                string t = line.text;
+                if (t.Contains("mengumpulkan cukup banyak catatan") || t.Contains("belum memahami seluruh ceritanya")) return 1;
+                if (t.Contains("masih mengikuti jejak itu") || t.Contains("semakin dekat, tetapi masih ada satu bagian")) return 2;
+                if (t.Contains("sampai sejauh ini. Apa lagi") || t.Contains("mengakui bahwa tindakanku") || t.Contains("bersedia menyerahkan informasi")) return 3;
             }
 
-            string txt = (line.text ?? "").ToUpperInvariant();
-
-            // Kata kunci atau tanda baca konfrontasi marah
-            if (txt.Contains("!") ||
-                txt.Contains("MEMPERINGATKAN") ||
-                txt.Contains("MENGHADANG") ||
-                txt.Contains("GERAM") ||
-                txt.Contains("MARAH") ||
-                txt.Contains("HENTIKAN") ||
-                txt.Contains("LAWAN") ||
-                txt.Contains("HANCUR"))
+            // 2. Cek alur GameFlowManager
+            if (GameFlowManager.Instance != null && GameFlowManager.Instance.currentStage > 0)
             {
-                return true;
+                return GameFlowManager.Instance.currentStage;
             }
 
-            // Konfrontasi stage lanjut (Stage 2 atau 3) bernada tegang/marah kecuali dialog mengaku kalah
-            if (GameFlowManager.Instance != null && GameFlowManager.Instance.currentStage >= 2)
+            // 3. Cek local storage progress
+            if (CARE.Data.CareSaveManager.Instance != null && CARE.Data.CareSaveManager.Instance.CurrentStage > 0)
             {
-                if (!txt.Contains("MENGAKUI") && !txt.Contains("BERSEDIA MENYERAHKAN"))
-                {
-                    return true;
-                }
+                return CARE.Data.CareSaveManager.Instance.CurrentStage;
             }
 
-            return false;
+            // 4. Cek referensi daftar dialog boss yang sedang berjalan
+            if (currentDialogueLines != null && currentDialogueLines.Count > 0)
+            {
+                var first = currentDialogueLines[0];
+                if (CareStoryDatabase.BossStage1_Intro != null && CareStoryDatabase.BossStage1_Intro.Count > 0 && first == CareStoryDatabase.BossStage1_Intro[0]) return 1;
+                if (CareStoryDatabase.BossStage1_Defeat != null && CareStoryDatabase.BossStage1_Defeat.Count > 0 && first == CareStoryDatabase.BossStage1_Defeat[0]) return 1;
+
+                if (CareStoryDatabase.BossStage2_Intro != null && CareStoryDatabase.BossStage2_Intro.Count > 0 && first == CareStoryDatabase.BossStage2_Intro[0]) return 2;
+                if (CareStoryDatabase.BossStage2_Defeat != null && CareStoryDatabase.BossStage2_Defeat.Count > 0 && first == CareStoryDatabase.BossStage2_Defeat[0]) return 2;
+
+                if (CareStoryDatabase.BossStage3_Intro != null && CareStoryDatabase.BossStage3_Intro.Count > 0 && first == CareStoryDatabase.BossStage3_Intro[0]) return 3;
+                if (CareStoryDatabase.BossStage3_Defeat != null && CareStoryDatabase.BossStage3_Defeat.Count > 0 && first == CareStoryDatabase.BossStage3_Defeat[0]) return 3;
+            }
+
+            return 1;
         }
 
-        private void StartVoiceTone(AudioClip toneClip)
+        private void StartVoiceTone(AudioClip toneClip, bool isAgoti = false)
         {
-            if (voiceAudioSource == null || toneClip == null) return;
+            if (voiceAudioSource == null) return;
+
+            // Jika tidak ada toneClip (misal Narator), hentikan total voice source agar hening
+            if (toneClip == null)
+            {
+                StopVoiceTone();
+                return;
+            }
+
+            // Hentikan suara sebelumnya sebelum berganti ke klip baru
+            StopVoiceTone();
 
             voiceAudioSource.clip = toneClip;
-            float clipLen = toneClip.length;
-
-            // Random pick offset agar suara percakapan dinamis dan tidak selalu mulai dari detik ke-0
-            try
-            {
-                if (clipLen > 4f)
-                {
-                    float maxStart = Mathf.Max(0f, clipLen - 4f);
-                    voiceAudioSource.time = UnityEngine.Random.Range(0f, maxStart);
-                }
-                else
-                {
-                    voiceAudioSource.time = 0f;
-                }
-            }
-            catch (Exception)
-            {
-                // Fallback jika platform membatasi seek time sebelum decompress
-            }
-
-            voiceAudioSource.volume = 0.85f;
+            voiceAudioSource.time = 0f;
+            voiceAudioSource.volume = isAgoti ? agotiVoiceVolume : 0.85f;
+            voiceAudioSource.pitch = isAgoti ? agotiVoicePitch : 1.0f; // Dicepetin pitch-nya saat Agoti berbicara
             voiceAudioSource.loop = true;
             voiceAudioSource.Play();
         }
 
         private void StopVoiceTone()
         {
-            if (voiceAudioSource != null && voiceAudioSource.isPlaying)
+            if (voiceAudioSource != null)
             {
-                voiceAudioSource.Stop();
+                if (voiceAudioSource.isPlaying)
+                {
+                    voiceAudioSource.Stop();
+                }
+                voiceAudioSource.loop = false;
+                voiceAudioSource.clip = null; // Kosongkan agar buffer audio tidak bocor ke baris dialog berikutnya
+                voiceAudioSource.time = 0f;
+                voiceAudioSource.pitch = 1.0f; // Reset pitch kembali normal
             }
         }
 
@@ -540,7 +587,11 @@ namespace CARE.UI
             if (dialogueBodyText != null) dialogueBodyText.text = "";
 
             AudioClip toneClip = GetToneForLine(line);
-            StartVoiceTone(toneClip);
+            string speaker = (line != null && line.speaker != null) ? line.speaker.ToUpperInvariant() : "";
+            string portrait = (line != null && line.portraitKey != null) ? line.portraitKey.ToLowerInvariant() : "";
+            bool isBoss = speaker.Contains("SAWIT") || speaker.Contains("DOCTOR") || portrait == "sawit_man";
+
+            StartVoiceTone(toneClip, isBoss);
 
             string text = line != null ? line.text : "";
             for (int i = 0; i < text.Length; i++)
@@ -551,14 +602,14 @@ namespace CARE.UI
                     dialogueBodyText.text += c;
                 }
 
-                // Jeda alami percakapan saat bertemu tanda baca
+                // Jeda alami percakapan saat bertemu tanda baca (dipercepat agar looping tidak terlalu lama terhenti)
                 if (c == '.' || c == ',' || c == '!' || c == '?' || c == ':')
                 {
                     if (voiceAudioSource != null && voiceAudioSource.isPlaying)
                     {
                         voiceAudioSource.Pause();
                     }
-                    yield return new WaitForSecondsRealtime(typingSpeed * 2.5f);
+                    yield return new WaitForSecondsRealtime(typingSpeed * 1.4f);
                     if (isTyping && voiceAudioSource != null && voiceAudioSource.clip != null)
                     {
                         voiceAudioSource.UnPause();
